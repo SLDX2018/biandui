@@ -25,14 +25,14 @@ std::shared_ptr<Handle> Executor::GetHandle() {
 
 void Executor::ExecuteSubscription(const std::shared_ptr<SubscriptionBase>& subscription) {
   auto message_header = subscription->CreateMessageHeader();
-  std::shared_ptr<void> message = subscription->CreateMessage();
+  std::shared_ptr<void> message = subscription->CreateMessage();  // void类型指针，SubscriptionBase类型的指针可以调用其派生类的成员函数
 
-  bool ret = GetHandle()->GetProtocol()->Take(
-      subscription->GetCommandInfo().get(),
-      message_header.get(),
-      message.get());
+  bool ret = GetHandle()->GetProtocol()->Take(  //handle作为分发层句柄，操作协议里的take函数，从接受池中取出一个消息
+      subscription->GetCommandInfo().get(), //期望接收到的消息类型，CommandInfo结构体类型，包含命令码、是否需要ack等信息，GetCommandInfo返回的是对象的共享指针，get方法返回的是对象
+      message_header.get(), //实际接收到的消息头
+      message.get());       //实际接收到的消息数据
   if (ret) {
-    subscription->HandleMessage(message_header, message);
+    subscription->HandleMessage(message_header, message);   //处理消息，调用回调函数
   } else {
 //      DLOG_ERROR<<"take message failed!";
   }

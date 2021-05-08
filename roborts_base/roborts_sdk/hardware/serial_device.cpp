@@ -169,7 +169,7 @@ int SerialDevice::Read(uint8_t *buf, int len) {
         usleep(500000);
       }
       LOG_INFO << "Reconnect Success.";
-      ret = read(serial_fd_, buf, len);
+      ret = read(serial_fd_, buf, len);   //返回值为实际读到的字节数
     }
     return ret;
   }

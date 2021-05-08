@@ -31,7 +31,7 @@ Chassis::~Chassis(){
 }
 void Chassis::SDK_Init(){
 
-  verison_client_ = handle_->CreateClient<roborts_sdk::cmd_version_id,roborts_sdk::cmd_version_id>
+  verison_client_ = handle_->CreateClient<roborts_sdk::cmd_version_id, roborts_sdk::cmd_version_id> //cmd, ack 都是cmd_version_id类型
       (UNIVERSAL_CMD_SET, CMD_REPORT_VERSION,
        MANIFOLD2_ADDRESS, CHASSIS_ADDRESS);
   roborts_sdk::cmd_version_id version_cmd;
@@ -41,15 +41,17 @@ void Chassis::SDK_Init(){
                                     [](roborts_sdk::Client<roborts_sdk::cmd_version_id,
                                                            roborts_sdk::cmd_version_id>::SharedFuture future) {
                                       ROS_INFO("Chassis Firmware Version: %d.%d.%d.%d",
-                                               int(future.get()->version_id>>24&0xFF),
-                                               int(future.get()->version_id>>16&0xFF),
-                                               int(future.get()->version_id>>8&0xFF),
-                                               int(future.get()->version_id&0xFF));
+                                               int(future.get()->version_id>>24 & 0xFF),
+                                               int(future.get()->version_id>>16 & 0xFF),
+                                               int(future.get()->version_id>>8 & 0xFF),
+                                               int(future.get()->version_id & 0xFF));
                                     });
 
   handle_->CreateSubscriber<roborts_sdk::cmd_chassis_info>(CHASSIS_CMD_SET, CMD_PUSH_CHASSIS_INFO,
                                                            CHASSIS_ADDRESS, MANIFOLD2_ADDRESS,
-                                                           std::bind(&Chassis::ChassisInfoCallback, this, std::placeholders::_1));
+                                                           std::bind(&Chassis::ChassisInfoCallback, this, std::placeholders::_1));  //std::bind 第一个参数为函数地址，对于成员函数而言必须显性的 &取地址
+                                                           // bind 即对函数的参数进行绑定，类似重映射函数的参数位置关系，默认值等
+                                                           // 关于bind的详细解释 https://blog.csdn.net/tennysonsky/article/details/77447804
   handle_->CreateSubscriber<roborts_sdk::cmd_uwb_info>(COMPATIBLE_CMD_SET, CMD_PUSH_UWB_INFO,
                                                        CHASSIS_ADDRESS, MANIFOLD2_ADDRESS,
                                                        std::bind(&Chassis::UWBInfoCallback, this, std::placeholders::_1));
@@ -78,7 +80,7 @@ void Chassis::ROS_Init(){
   ros_odom_pub_ = ros_nh_.advertise<nav_msgs::Odometry>("odom", 30);
   ros_uwb_pub_ = ros_nh_.advertise<geometry_msgs::PoseStamped>("uwb", 30);
   //ros subscriber
-  ros_sub_cmd_chassis_vel_ = ros_nh_.subscribe("cmd_vel", 1, &Chassis::ChassisSpeedCtrlCallback, this);
+  ros_sub_cmd_chassis_vel_ = ros_nh_.subscribe("cmd_vel", 1, &Chassis::ChassisSpeedCtrlCallback, this);   //订阅一个ros话题，收到消息后通过串口Publish出去
   ros_sub_cmd_chassis_vel_acc_ = ros_nh_.subscribe("cmd_vel_acc", 1, &Chassis::ChassisSpeedAccCtrlCallback, this);
 
 
@@ -132,7 +134,7 @@ void Chassis::ChassisSpeedCtrlCallback(const geometry_msgs::Twist::ConstPtr &vel
   chassis_speed.vw = vel->angular.z * 1800.0 / M_PI;
   chassis_speed.rotate_x_offset = 0;
   chassis_speed.rotate_y_offset = 0;
-  chassis_speed_pub_->Publish(chassis_speed);
+  chassis_speed_pub_->Publish(chassis_speed);   //这里的Publish 是ros_sdk中自己定义的Publish，是通过串口发送
 }
 
 void Chassis::ChassisSpeedAccCtrlCallback(const roborts_msgs::TwistAccel::ConstPtr &vel_acc){

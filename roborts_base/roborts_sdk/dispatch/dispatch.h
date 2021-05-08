@@ -103,7 +103,7 @@ class SubscriptionBase {
 template<typename Cmd>
 class Subscription : public SubscriptionBase {
  public:
-  using SharedMessage = typename std::shared_ptr<Cmd>;
+  using SharedMessage = typename std::shared_ptr<Cmd>;    //在实际调用的时候，这里的Cmd是  SubscriptionBase类
   using CallbackType = typename std::function<void(const SharedMessage)>;
 
   Subscription(std::shared_ptr<Handle> handle,
@@ -112,13 +112,13 @@ class Subscription : public SubscriptionBase {
                CallbackType &&function) :
       SubscriptionBase(handle, cmd_set, cmd_id, sender, receiver),
       callback_(std::forward<CallbackType>(function)) {
-    cmd_info_->length = sizeof(Cmd);
+    cmd_info_->length = sizeof(Cmd);  // cmd_info_ 在基类中定义的
   }
   ~Subscription() = default;
   std::shared_ptr<void> CreateMessage() {
     return std::shared_ptr<void>(new Cmd);
   }
-  void HandleMessage(std::shared_ptr<MessageHeader> message_header, std::shared_ptr<void> message) {
+  void HandleMessage(std::shared_ptr<MessageHeader> message_header, std::shared_ptr<void> message) {    //处理消息，即调用回调函数
     auto typed_message = std::static_pointer_cast<Cmd>(message);
     callback_.Dispatch(message_header, typed_message);
   }
@@ -164,7 +164,7 @@ class Publisher : public PublisherBase {
   ~Publisher() = default;
 
   void Publish(Cmd &message) {
-    bool ret = GetHandle()->GetProtocol()->SendMessage(GetCommandInfo().get(), &message);
+    bool ret = GetHandle()->GetProtocol()->SendMessage(GetCommandInfo().get(), &message);   //SendMessage 是不需要ack的发送接口,.get()是shared_ptr的方法
     if (!ret) {
       DLOG_ERROR << "send message failed!";
     }
@@ -230,7 +230,7 @@ class Client : public ClientBase {
 
   void HandleResponse(std::shared_ptr<MessageHeader> request_header, std::shared_ptr<void> response) {
 
-    std::unique_lock<std::mutex> lock(pending_requests_mutex_);
+    std::unique_lock<std::mutex> lock(pending_requests_mutex_);   //互斥锁上锁，
     auto typed_response = std::static_pointer_cast<Ack>(response);
     //TODO: Determine key: seq_num or session_id
     uint8_t session_id = request_header->session_id;
@@ -251,15 +251,15 @@ class Client : public ClientBase {
   }
 
   SharedFuture
-  AsyncSendRequest(SharedRequest request) {
-    return AsyncSendRequest(request, [](SharedFuture) {});
+  AsyncSendRequest(SharedRequest request) {   //异步发送请求  重载
+    return AsyncSendRequest(request, [](SharedFuture) {});    //
   }
 
   template<typename CallbackType>
   SharedFuture AsyncSendRequest(SharedRequest request, CallbackType &&cb) {
-    std::lock_guard<std::mutex> lock(pending_requests_mutex_);
-    auto request_header = std::make_shared<MessageHeader>();
-    bool ret = GetHandle()->GetProtocol()->SendRequest(GetCommandInfo().get(), request_header.get(), request.get());
+    std::lock_guard<std::mutex> lock(pending_requests_mutex_);    //互斥锁，构造时上锁，析构时解锁
+    auto request_header = std::make_shared<MessageHeader>();    //创建帧头
+    bool ret = GetHandle()->GetProtocol()->SendRequest(GetCommandInfo().get(), request_header.get(), request.get());  //这个相当于对话一次，有发有收
 
     if (!ret) {
       LOG_ERROR << "Async_send_request failed!";

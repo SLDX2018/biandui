@@ -20,8 +20,8 @@
 
 namespace roborts_sdk {
 
-Protocol::Protocol(std::shared_ptr<SerialDevice> serial_device_ptr) :
-    running_(false),
+Protocol::Protocol(std::shared_ptr<SerialDevice> serial_device_ptr) :     //智能指针，模板类实现
+    running_(false),    //构造函数参数列表
     serial_device_ptr_(serial_device_ptr), seq_num_(0),
     is_large_data_protocol_(true), reuse_buffer_(true),
     poll_tick_(10) {
@@ -69,43 +69,43 @@ bool Protocol::Init() {
 
   recv_container_ptr_ = new RecvContainer();
 
-  SetupSession();
+  SetupSession();   //装载会话，相当于对会话的初始化
 
   running_ = true;
-  send_poll_thread_ = std::thread(&Protocol::AutoRepeatSendCheck, this);
+  send_poll_thread_ = std::thread(&Protocol::AutoRepeatSendCheck, this);  //新线程将在创建新对象后立即开始，并且将与已启动的线程并行执行传递的回调。
   receive_pool_thread_ = std::thread(&Protocol::ReceivePool, this);
   return true;
 }
 
-void Protocol::AutoRepeatSendCheck() {
+void Protocol::AutoRepeatSendCheck() {    //在上面init函数中开了一个线程，自动检查是否需要重发
   while (running_) {
     unsigned int i;
 
     std::chrono::steady_clock::time_point current_time_stamp;
 
-    for (i = 1; i < SESSION_TABLE_NUM; i++) {
+    for (i = 1; i < SESSION_TABLE_NUM; i++) { //遍历会话表
 
-      if (cmd_session_table_[i].usage_flag == 1) {
+      if (cmd_session_table_[i].usage_flag == 1) {  //先判断这个会话有没有使能
         current_time_stamp = std::chrono::steady_clock::now();
-        if ((std::chrono::duration_cast<std::chrono::milliseconds>
+        if ((std::chrono::duration_cast<std::chrono::milliseconds>  //函数模板，将两次发送时间戳的差值转换为milliseconds类型  //微秒
             (current_time_stamp - cmd_session_table_[i].pre_time_stamp) >
-            cmd_session_table_[i].ack_timeout)) {
+            cmd_session_table_[i].ack_timeout)) { //超过响应时间
 
           memory_pool_ptr_->LockMemory();
-          if (cmd_session_table_[i].retry_time > 0) {
+          if (cmd_session_table_[i].retry_time > 0) {   //重试次数的阈值，大于0即可以重发
 
-            if (cmd_session_table_[i].sent >= cmd_session_table_[i].retry_time) {
+            if (cmd_session_table_[i].sent >= cmd_session_table_[i].retry_time) { //重试次数超过阈值
               LOG_ERROR << "Sending timeout, Free session "
                         << static_cast<int>(cmd_session_table_[i].session_id);
-              FreeCMDSession(&cmd_session_table_[i]);
+              FreeCMDSession(&cmd_session_table_[i]); //失能当前会话，释放内存，usage_flag清0
             } else {
               LOG_ERROR << "Retry session "
                         << static_cast<int>(cmd_session_table_[i].session_id);
-              DeviceSend(cmd_session_table_[i].memory_block_ptr->memory_ptr);
+              DeviceSend(cmd_session_table_[i].memory_block_ptr->memory_ptr); //串口发送数据
               cmd_session_table_[i].pre_time_stamp = current_time_stamp;
               cmd_session_table_[i].sent++;
             }
-          } else {
+          } else {  //重试次数的阈值，为0，则认为是只发送一次
             DLOG_ERROR << "Send once " << i;
             DeviceSend(cmd_session_table_[i].memory_block_ptr->memory_ptr);
             cmd_session_table_[i].pre_time_stamp = current_time_stamp;
@@ -120,20 +120,22 @@ void Protocol::AutoRepeatSendCheck() {
   }
 }
 
+// 同一个命令码（cmd_set和cmd_id两个字节）对应的消息（RecvContainer）都放到一个环形缓冲中 CircularBuffer<RecvContainer> 
+// 命令码和环形缓冲使用 std::map 容器来对应
 void Protocol::ReceivePool() {
   std::chrono::steady_clock::time_point start_time, end_time;
   std::chrono::microseconds execution_duration;
-  std::chrono::microseconds cycle_duration = std::chrono::microseconds(int(1e6/READING_RATE));
+  std::chrono::microseconds cycle_duration = std::chrono::microseconds(int(1e6/READING_RATE));  //1e6微秒=1秒 
   while (running_) {
-    start_time = std::chrono::steady_clock::now();
-    RecvContainer *container_ptr = Receive();
+    start_time = std::chrono::steady_clock::now();    //获取系统时间，从系统启动的时刻开始算，单位纳秒
+    RecvContainer *container_ptr = Receive();   //接受数据并在做校验之后，处理数据，在最顶层 //**这个是重点******************
     if (container_ptr) {
-      std::lock_guard<std::mutex> lock(mutex_);
+      std::lock_guard<std::mutex> lock(mutex_); //std::mutex是互斥锁对象，lock_guard是互斥类，只有构造函数和析构函数，构造函数上锁，析构函数解锁，简化上锁操作
       if (buffer_pool_map_.count(std::make_pair(container_ptr->command_info.cmd_set,
-                                                container_ptr->command_info.cmd_id)) == 0) {
+                                                container_ptr->command_info.cmd_id)) == 0) {    //map的count方法，返回值只可能是0或1，map是红黑树，值唯一
         buffer_pool_map_[std::make_pair(container_ptr->command_info.cmd_set,
                                         container_ptr->command_info.cmd_id)]
-            = std::make_shared<CircularBuffer<RecvContainer>>(100);
+            = std::make_shared<CircularBuffer<RecvContainer>>(100);   //直接赋值就可以把元素插入map容器，这里只是向map容器中放了一个空的RecvContainer对象
 
         DLOG_INFO<<"Capture command: "
                  <<"cmd set: 0x"<< std::setw(2) << std::hex << std::setfill('0') << int(container_ptr->command_info.cmd_set)
@@ -144,18 +146,19 @@ void Protocol::ReceivePool() {
       }
       //1 time copy
       buffer_pool_map_[std::make_pair(container_ptr->command_info.cmd_set,
-                                      container_ptr->command_info.cmd_id)]->Push(*container_ptr);
+                                      container_ptr->command_info.cmd_id)]->Push(*container_ptr);   //向相应的环形缓冲中push一个RecvContainer对象
     }
-    end_time = std::chrono::steady_clock::now();
+    end_time = std::chrono::steady_clock::now();    //计算数据接受用了多长时间，用来保证接受频率
     std::chrono::microseconds execution_duration =
         std::chrono::duration_cast<std::chrono::microseconds>(end_time - start_time);
     if (cycle_duration > execution_duration){
-      std::this_thread::sleep_for(cycle_duration - execution_duration);
+      std::this_thread::sleep_for(cycle_duration - execution_duration);   //如果提前完成任务之后延时，保证接受数据的频率是 READING_RATE
     }
 
   }
 }
 
+//从接收池中取出一个消息，这是个接口，ReceivePool对应的线程一直在运行，数据在环形缓冲中不断更新，但是调用Take才能取出一个数据
 bool Protocol::Take(const CommandInfo *command_info,
                     MessageHeader *message_header,
                     void *message_data) {
@@ -165,17 +168,17 @@ bool Protocol::Take(const CommandInfo *command_info,
                                             command_info->cmd_id)) == 0) {
 //    DLOG_ERROR<<"take failed";
     return false;
-  } else {
+  } else {        // 通过命令码找到该命令码对应的环形缓冲
     //1 time copy
     RecvContainer container;
 
     if (!buffer_pool_map_[std::make_pair(command_info->cmd_set,
-                                         command_info->cmd_id)]->Pop(container)) {
+                                         command_info->cmd_id)]->Pop(container)) {    //Pop传入参数是一个RecvContainer类型的引用，从消息组中Pop一个消息
 //      DLOG_EVERY_N(ERROR, 100)<<"nothing to take";
       return false;
     }
 
-
+    // 再次匹配一下要接受的消息和实际接受的消息是不是能对应上，主要看一些固定的字段？？？   //********************
     bool mismatch = false;
 
     if (int(container.command_info.need_ack) != int(command_info->need_ack)){
@@ -184,7 +187,7 @@ bool Protocol::Take(const CommandInfo *command_info,
       mismatch = true;
     }
 
-    if (container.message_header.is_ack){
+    if (container.message_header.is_ack){   // 如果需要ack，那container的接收地址应该是当前消息的发送地址？？？？   //********************
       if (int(container.command_info.receiver) != int(command_info->sender)){
         DLOG_ERROR << "Requested ACK receiver: "<< std::setw(2) << std::hex << std::setfill('0') << int(command_info->sender)
                    << ", Get ACK receiver: "<< std::setw(2) << std::hex << std::setfill('0') << int(container.command_info.receiver);
@@ -216,19 +219,20 @@ bool Protocol::Take(const CommandInfo *command_info,
       mismatch = true;
     }
 
-    if(mismatch){
+    if(mismatch){   //没有匹配上
       buffer_pool_map_[std::make_pair(command_info->cmd_set,
-                                      command_info->cmd_id)]->Push(container);
+                                      command_info->cmd_id)]->Push(container);  //那为什么没有匹配上还要重新push到环形缓冲中？？ //********************
       return false;
     }
 
     //1 time copy
-    memcpy(message_header, &(container.message_header), sizeof(message_header));
+    memcpy(message_header, &(container.message_header), sizeof(message_header));  //操作指针，将数据从函数内传出
     memcpy(message_data, &(container.message_data), command_info->length);
 
     return true;
   }
 }
+// SendResponse在分发层有方法调用了，但是实际代码中没有使用，猜测是pc作为“主设备”，和底板通信要么请求数据，要么直接发数据，底板没有向pc请求数据的需求
 bool Protocol::SendResponse(const CommandInfo *command_info,
                             const MessageHeader *message_header,
                             void *message_data) {
@@ -237,14 +241,14 @@ bool Protocol::SendResponse(const CommandInfo *command_info,
                  command_info->receiver,
                  message_data, command_info->length);
 }
-bool Protocol::SendRequest(const CommandInfo *command_info,
-                           MessageHeader *message_header,
-                           void *message_data) {
+bool Protocol::SendRequest(const CommandInfo *command_info,   //command_info是要发送出去的，这个对象里面有 need_ack 来确定是否需要ack，和SendMessage区分
+                           MessageHeader *message_header,   //接收到的消息头
+                           void *message_data) {            //接收到的消息体
   return SendCMD(command_info->cmd_set, command_info->cmd_id,
                  command_info->receiver, message_data, command_info->length,
-                 CMDSessionMode::CMD_SESSION_AUTO, message_header);
+                 CMDSessionMode::CMD_SESSION_AUTO, message_header);   //ack_timeout 和retry_time 有默认值
 }
-bool Protocol::SendMessage(const CommandInfo *command_info,
+bool Protocol::SendMessage(const CommandInfo *command_info,   //直接发送数据，不需要ack
                            void *message_data) {
   return SendCMD(command_info->cmd_set, command_info->cmd_id,
                  command_info->receiver, message_data, command_info->length,
@@ -269,19 +273,19 @@ void Protocol::SetupSession() {
   }
 }
 
-CMDSession *Protocol::AllocCMDSession(CMDSessionMode session_mode, uint16_t size) {
-  uint32_t i;
+CMDSession *Protocol::AllocCMDSession(CMDSessionMode session_mode, uint16_t size) {   //usage_flag==0时，即没有占用的时候才能申请内存
+  uint32_t i;   
   MemoryBlock *memory_block_ptr = nullptr;
 
   if (session_mode == CMDSessionMode::CMD_SESSION_0 || session_mode == CMDSessionMode::CMD_SESSION_1) {
     if (cmd_session_table_[(uint16_t) session_mode].usage_flag == 0) {
-      i = static_cast<uint32_t>(session_mode);
+      i = static_cast<uint32_t>(session_mode);    //良性类型转换，一般不错 http://c.biancheng.net/cpp/biancheng/view/3297.html
     } else {
       DLOG_ERROR << "session " << static_cast<uint32_t>(session_mode) << " is busy\n";
       return nullptr;
     }
-  } else {
-    for (i = 2; i < SESSION_TABLE_NUM; i++) {
+  } else {    //session_mode=32 必须收到ack
+    for (i = 2; i < SESSION_TABLE_NUM; i++) {   //找到第一个空闲的session
       if (cmd_session_table_[i].usage_flag == 0) {
         break;
       }
@@ -292,7 +296,7 @@ CMDSession *Protocol::AllocCMDSession(CMDSessionMode session_mode, uint16_t size
   if (i < 32 && cmd_session_table_[i].usage_flag == 0) {
 
     cmd_session_table_[i].usage_flag = 1;
-    memory_block_ptr = memory_pool_ptr_->AllocMemory(size);
+    memory_block_ptr = memory_pool_ptr_->AllocMemory(size);   //申请内存
     if (memory_block_ptr == nullptr) {
       cmd_session_table_[i].usage_flag = 0;
     } else {
@@ -357,13 +361,13 @@ bool Protocol::SendCMD(uint8_t cmd_set, uint8_t cmd_id, uint8_t receiver,
     return false;
   }
   pack_length = HEADER_LEN +
-      CMD_SET_PREFIX_LEN +
+      CMD_SET_PREFIX_LEN +    // 命令码
       data_length + CRC_DATA_LEN;
 
   //second get the param into the session
   switch (session_mode) {
 
-    case CMDSessionMode::CMD_SESSION_0:
+    case CMDSessionMode::CMD_SESSION_0: //不需要ack
       //lock
       memory_pool_ptr_->LockMemory();
       cmd_session_ptr = AllocCMDSession(CMDSessionMode::CMD_SESSION_0, pack_length);
@@ -396,11 +400,11 @@ bool Protocol::SendCMD(uint8_t cmd_set, uint8_t cmd_id, uint8_t receiver,
       }
 
       // pack the cmd prefix ,data and data crc into memory block one by one
-      memcpy(cmd_session_ptr->memory_block_ptr->memory_ptr + HEADER_LEN, cmd_set_prefix, CMD_SET_PREFIX_LEN);
-      memcpy(cmd_session_ptr->memory_block_ptr->memory_ptr + HEADER_LEN + CMD_SET_PREFIX_LEN, data_ptr, data_length);
+      memcpy(cmd_session_ptr->memory_block_ptr->memory_ptr + HEADER_LEN, cmd_set_prefix, CMD_SET_PREFIX_LEN);   // 命令码
+      memcpy(cmd_session_ptr->memory_block_ptr->memory_ptr + HEADER_LEN + CMD_SET_PREFIX_LEN, data_ptr, data_length); // 数据部分
 
       crc_data = CRC32Calc(cmd_session_ptr->memory_block_ptr->memory_ptr, pack_length - CRC_DATA_LEN);
-      memcpy(cmd_session_ptr->memory_block_ptr->memory_ptr + pack_length - CRC_DATA_LEN, &crc_data, CRC_DATA_LEN);
+      memcpy(cmd_session_ptr->memory_block_ptr->memory_ptr + pack_length - CRC_DATA_LEN, &crc_data, CRC_DATA_LEN);  //数据部分的CRC校验
 
       // send it using device
       DeviceSend(cmd_session_ptr->memory_block_ptr->memory_ptr);
@@ -411,10 +415,10 @@ bool Protocol::SendCMD(uint8_t cmd_set, uint8_t cmd_id, uint8_t receiver,
       memory_pool_ptr_->UnlockMemory();
       break;
 
-    case CMDSessionMode::CMD_SESSION_1:
+    case CMDSessionMode::CMD_SESSION_1: //需要但不必需ack
       //lock
       memory_pool_ptr_->LockMemory();
-      cmd_session_ptr = AllocCMDSession(CMDSessionMode::CMD_SESSION_1, pack_length);
+      cmd_session_ptr = AllocCMDSession(CMDSessionMode::CMD_SESSION_1, pack_length);  //对CMD会话表里面的一个元素的memory_block_ptr字段申请内存空间
 
       if (cmd_session_ptr == nullptr) {
         //unlock
@@ -424,7 +428,7 @@ bool Protocol::SendCMD(uint8_t cmd_set, uint8_t cmd_id, uint8_t receiver,
       }
 
       //may be used more than once, seq_num_ should increase if duplicated.
-      if (seq_num_ == cmd_session_ptr->pre_seq_num) {
+      if (seq_num_ == cmd_session_ptr->pre_seq_num) {   //cmd_session_ptr是CMD会话表中某个元素的指针，申请释放空间只是针对memory_block_ptr字段，因此pre_seq_num会保留
         seq_num_++;
       }
 
@@ -623,15 +627,15 @@ bool Protocol::DeviceSend(uint8_t *buf) {
 }
 
 /****************************** Recv Pipline ******************************/
-RecvContainer *Protocol::Receive() {
+RecvContainer *Protocol::Receive() {  //从硬件读到recv_buff_ptr_
 
   //! Bool to check if the protocol parser has finished a full frame
   bool is_frame = false;
 
-  //! Step 1: Check if the buffer has been consumed
-  if (recv_buff_read_pos_ >= recv_buff_read_len_) {
+  //! Step 1: Check if the buffer has been consumed   //检查是否读完数据，并重置pos和len，开始下一次读取数据
+  if (recv_buff_read_pos_ >= recv_buff_read_len_) {   //上一次读完的时候，for遍历最后，recv_buff_read_pos_ 比 recv_buff_read_len_ 大
     recv_buff_read_pos_ = 0;
-    recv_buff_read_len_ = serial_device_ptr_->Read(recv_buff_ptr_, BUFFER_SIZE);
+    recv_buff_read_len_ = serial_device_ptr_->Read(recv_buff_ptr_, BUFFER_SIZE);  //Read返回值为读到的字节数    
   }
 
   //! Step 2:
@@ -641,14 +645,14 @@ RecvContainer *Protocol::Receive() {
   //! buffer data we have already read
 
   //TODO: unhandled
-  if (is_large_data_protocol_ && recv_buff_read_len_ == BUFFER_SIZE) {
+  if (is_large_data_protocol_ && recv_buff_read_len_ == BUFFER_SIZE) {    //是否启用了大数据包的读取（比buffer大的数据包）
 
-    memcpy(recv_stream_ptr_->recv_buff + (recv_stream_ptr_->recv_index), recv_buff_ptr_,
+    memcpy(recv_stream_ptr_->recv_buff + (recv_stream_ptr_->recv_index), recv_buff_ptr_,    //这种情况下recv_stream_ptr_是循环使用的
            BUFFER_SIZE);
     recv_stream_ptr_->recv_index += BUFFER_SIZE;
-    recv_buff_read_pos_ = BUFFER_SIZE;
+    recv_buff_read_pos_ = BUFFER_SIZE;                  //********************
   } else {
-    for (recv_buff_read_pos_; recv_buff_read_pos_ < recv_buff_read_len_;
+    for (recv_buff_read_pos_; recv_buff_read_pos_ < recv_buff_read_len_;    //0~从硬件中读取的字节数
          recv_buff_read_pos_++) {
       is_frame = ByteHandler(recv_buff_ptr_[recv_buff_read_pos_]);
 
@@ -662,16 +666,16 @@ RecvContainer *Protocol::Receive() {
   return nullptr;
 }
 
-bool Protocol::ByteHandler(const uint8_t byte) {
+bool Protocol::ByteHandler(const uint8_t byte) {      //字节搬运  //从buffer到 stream
   recv_stream_ptr_->reuse_count = 0;
   recv_stream_ptr_->reuse_index = MAX_PACK_SIZE;
 
   bool is_frame = StreamHandler(byte);
 
-  if (reuse_buffer_) {
+  if (reuse_buffer_) {    //true
     if (recv_stream_ptr_->reuse_count != 0) {
 
-      while (recv_stream_ptr_->reuse_index < MAX_PACK_SIZE) {
+      while (recv_stream_ptr_->reuse_index < MAX_PACK_SIZE) {   // 遍历recv_stream_ptr_->recv_buff[]
         /*! @note because reuse_index maybe re-located, so reuse_index must
          *  be
          *  always point to un-used index
@@ -685,14 +689,14 @@ bool Protocol::ByteHandler(const uint8_t byte) {
   return is_frame;
 }
 
-bool Protocol::StreamHandler(uint8_t byte) {
+bool Protocol::StreamHandler(uint8_t byte) {    //保存一个字节到recv_stream_ptr_->recv_buff //从硬件读出的数据进recv_buff_ptr_，再搬运到stream
 
   // push the byte into filter buffer
   if (recv_stream_ptr_->recv_index < MAX_PACK_SIZE) {
     recv_stream_ptr_->recv_buff[recv_stream_ptr_->recv_index] = byte;
     recv_stream_ptr_->recv_index++;
   } else {
-    LOG_ERROR << "Buffer overflow";
+    LOG_ERROR << "Buffer overflow";   //溢出
     memset(recv_stream_ptr_->recv_buff, 0, recv_stream_ptr_->recv_index);
     recv_stream_ptr_->recv_index = 0;
   }
@@ -701,40 +705,40 @@ bool Protocol::StreamHandler(uint8_t byte) {
   return is_frame;
 }
 
-bool Protocol::CheckStream() {
+bool Protocol::CheckStream() {         //检查是不是一个数据包的开始，找到完整数据包
   Header *header_ptr = (Header *) (recv_stream_ptr_->recv_buff);
 
   bool is_frame = false;
-  if (recv_stream_ptr_->recv_index < HEADER_LEN) {
+  if (recv_stream_ptr_->recv_index < HEADER_LEN) {  //帧头长度
     return false;
-  } else if (recv_stream_ptr_->recv_index == HEADER_LEN) {
+  } else if (recv_stream_ptr_->recv_index == HEADER_LEN) {  //帧头校验
     is_frame = VerifyHeader();
-  } else if (recv_stream_ptr_->recv_index == header_ptr->length) {
+  } else if (recv_stream_ptr_->recv_index == header_ptr->length) {  //数据域校验
     is_frame = VerifyData();
   }
 
   return is_frame;
 }
 
-bool Protocol::VerifyHeader() {
+bool Protocol::VerifyHeader() {   //检查帧头
   Header *header_ptr = (Header *) (recv_stream_ptr_->recv_buff);
   bool is_frame = false;
 
   if ((header_ptr->sof == SOF) && (header_ptr->version == VERSION) &&
       (header_ptr->length < MAX_PACK_SIZE) && (header_ptr->reserved0 == 0) &&
       (header_ptr->reserved1 == 0) && (header_ptr->receiver == DEVICE || header_ptr->receiver == 0xFF) &&
-      CRCHeadCheck((uint8_t *) header_ptr, HEADER_LEN)) {
+      CRCHeadCheck((uint8_t *) header_ptr, HEADER_LEN)) {   //帧头数据正确CRC通过
     // It is an unused part because minimum package is at least longer than a header
-    if (header_ptr->length == HEADER_LEN) {
+    if (header_ptr->length == HEADER_LEN) {   //
 
-      is_frame = ContainerHandler();
+      is_frame = ContainerHandler();    //容器搬运？？********************
       //prepare data stream
-      PrepareStream();
+      PrepareStream();    //移动数据，去掉 header 部分
     }
 
   } else {
     //shift the data stream
-    ShiftStream();
+    ShiftStream();    //移动数据流，解决粘包问题，找到帧头，类似类似滑动窗口
   }
 
   return is_frame;
@@ -750,7 +754,7 @@ bool Protocol::VerifyData() {
     is_frame = ContainerHandler();
     //prepare data stream
     PrepareStream();
-  } else {
+  } else {      // 能到这里说明，帧头校验过了，数据部分的长度和帧头中的length对上了，但是数据部分的crc检验没通过
     //reuse the data stream
     ReuseStream();
   }
@@ -758,21 +762,21 @@ bool Protocol::VerifyData() {
   return is_frame;
 }
 
-bool Protocol::ContainerHandler() {
+bool Protocol::ContainerHandler() {   //到这已经可以保证是完整数据包了，通过了帧头检验，开始处理数据内容  //从stream到container
 
-  Header *session_header_ptr = nullptr;
+  Header *session_header_ptr = nullptr;   //通信的帧头
   Header *header_ptr = (Header *) (recv_stream_ptr_->recv_buff);
   bool is_frame = false;
 
-  if (header_ptr->is_ack) {
+  if (header_ptr->is_ack) {   //需要ack 
 
-    if (header_ptr->session_id > 0 && header_ptr->session_id < 32) {
+    if (header_ptr->session_id > 0 && header_ptr->session_id < 32) {    //会话id合法，保证cmd_session_table_访问不会越界 ********************
       if (cmd_session_table_[header_ptr->session_id].usage_flag == 1) {
 
         memory_pool_ptr_->LockMemory();
-        session_header_ptr = (Header *) cmd_session_table_[header_ptr->session_id].memory_block_ptr->memory_ptr;
+        session_header_ptr = (Header *) cmd_session_table_[header_ptr->session_id].memory_block_ptr->memory_ptr;  //每个会话有一个内存块，但是这个好像没有申请内存？alloc？********************
 
-        if (session_header_ptr->session_id == header_ptr->session_id
+        if (session_header_ptr->session_id == header_ptr->session_id  // 在 SetupSession 的时候已经对session_id赋值了，0-31
           // HotFix: Commented here. Redefine that ack and cmd can have different seq num during communication
           // && session_header_ptr->seq_num == header_ptr->seq_num
             ) {
@@ -784,33 +788,34 @@ bool Protocol::ContainerHandler() {
           recv_container_ptr_->command_info.length = header_ptr->length - HEADER_LEN - CRC_DATA_LEN;
           recv_container_ptr_->command_info.sender = header_ptr->sender;
           recv_container_ptr_->command_info.receiver = header_ptr->receiver;
-          recv_container_ptr_->command_info.cmd_set = cmd_session_table_[header_ptr->session_id].cmd_set;
-          recv_container_ptr_->command_info.cmd_id = cmd_session_table_[header_ptr->session_id].cmd_id;
+          recv_container_ptr_->command_info.cmd_set = cmd_session_table_[header_ptr->session_id].cmd_set; //命令码部分，共2字节   //并没有找到在哪里赋值的********************
+          recv_container_ptr_->command_info.cmd_id = cmd_session_table_[header_ptr->session_id].cmd_id;   // ********************
           recv_container_ptr_->command_info.need_ack = true;
 
-          memcpy(recv_container_ptr_->message_data.raw_data, (uint8_t *) header_ptr + HEADER_LEN,
+          memcpy(recv_container_ptr_->message_data.raw_data, (uint8_t *) header_ptr + HEADER_LEN,   //拷贝通信数据包中的数据部分
                  header_ptr->length - HEADER_LEN - CRC_DATA_LEN);
 
           is_frame = true;
-          FreeCMDSession(&cmd_session_table_[header_ptr->session_id]);
+          FreeCMDSession(&cmd_session_table_[header_ptr->session_id]); // 当前会话完成，失能当前会话，释放内存，usage_flag清0
           memory_pool_ptr_->UnlockMemory();
           // TODO: notify mechanism ,notify ack received and get recv container ready
 
         } else {
           memory_pool_ptr_->UnlockMemory();
         }
-      }
-    }
-  } else {
+      } //usage_flag == 1
+    } //session_id在1-31  合法session_id
+  } else {  //不需要发送 ack  
     switch (header_ptr->session_id) {
-      case 0:recv_container_ptr_->message_header.is_ack = false;
+      case 0:   
+        recv_container_ptr_->message_header.is_ack = false;
         recv_container_ptr_->message_header.seq_num = header_ptr->seq_num;
         recv_container_ptr_->message_header.session_id = header_ptr->session_id;
         recv_container_ptr_->command_info.sender = header_ptr->sender;
         recv_container_ptr_->command_info.receiver = header_ptr->receiver;
         recv_container_ptr_->command_info.length = header_ptr->length - HEADER_LEN - CMD_SET_PREFIX_LEN - CRC_DATA_LEN;
-        recv_container_ptr_->command_info.cmd_set = *((uint8_t *) header_ptr + HEADER_LEN + 1);
-        recv_container_ptr_->command_info.cmd_id = *((uint8_t *) header_ptr + HEADER_LEN);
+        recv_container_ptr_->command_info.cmd_set = *((uint8_t *) header_ptr + HEADER_LEN + 1);   //命令码部分，共2字节 ********************
+        recv_container_ptr_->command_info.cmd_id = *((uint8_t *) header_ptr + HEADER_LEN);    // ********************
         recv_container_ptr_->command_info.need_ack = false;
 
         memcpy(recv_container_ptr_->message_data.raw_data, (uint8_t *) header_ptr + HEADER_LEN + CMD_SET_PREFIX_LEN,
@@ -906,7 +911,7 @@ bool Protocol::ContainerHandler() {
 /*************************** Stream Management*****************************/
 void Protocol::PrepareStream() {
   uint32_t bytes_to_move = HEADER_LEN - 1;
-  uint32_t index_of_move = recv_stream_ptr_->recv_index - bytes_to_move;
+  uint32_t index_of_move = recv_stream_ptr_->recv_index - bytes_to_move;  //这里是减，recv_index指向的是最后一个字节的数据,是索引
 
   memmove(recv_stream_ptr_->recv_buff, recv_stream_ptr_->recv_buff + index_of_move, bytes_to_move);
   memset(recv_stream_ptr_->recv_buff + bytes_to_move, 0, index_of_move);
@@ -917,7 +922,7 @@ void Protocol::ShiftStream() {
   if (recv_stream_ptr_->recv_index) {
     recv_stream_ptr_->recv_index--;
     if (recv_stream_ptr_->recv_index) {
-      memmove(recv_stream_ptr_->recv_buff, recv_stream_ptr_->recv_buff + 1, recv_stream_ptr_->recv_index);
+      memmove(recv_stream_ptr_->recv_buff, recv_stream_ptr_->recv_buff + 1, recv_stream_ptr_->recv_index);  //相当于丢弃recv_buff第0字节，整体前移
     }
   }
 }

@@ -37,8 +37,8 @@ typedef struct Header {
   uint32_t sof : 8;
   uint32_t length : 10;
   uint32_t version : 6;
-  uint32_t session_id : 5;
-  uint32_t is_ack : 1;
+  uint32_t session_id : 5;    //包序号？？？？    //0~1需要ack，2-63不需要ack
+  uint32_t is_ack : 1;    //1为需要ack的包，0为普通包
   uint32_t reserved0 : 2; // Always 0
   uint32_t sender: 8;
   uint32_t receiver: 8;
@@ -158,7 +158,7 @@ typedef struct RecvStream {
 } RecvStream;
 
 /**
- * @brief Receive Stream
+ * @brief Receive Container
  * @details Used as an container after resolving the package and an interface with dispatch layer
  */
 typedef struct RecvContainer {
@@ -233,7 +233,7 @@ class Protocol {
   * @brief An interface function for dispatch layer to send cmd with need for ack in the protocol layer
   * @param command_info Input command information
   * @param message_header Get message header
-  * @param message_data Input message data
+  * @param message_data Get message data 
   * @return true if command is successfully allocated and sent by protocol layer
   */
   bool SendRequest(const CommandInfo *command_info,
@@ -370,6 +370,7 @@ class Protocol {
    *          the re-use data will loop later
    */
   void ReuseStream();
+
   /************************ Session Management ***********************/
   /**
    * @brief Setup the command and ack session for initialization
@@ -444,6 +445,7 @@ class Protocol {
    * @return True if tail CRC32 is validated successfully
    */
   bool CRCTailCheck(uint8_t *data_ptr, size_t length);
+  
   /******************* Const List ***************************/
 
   //! rate of buffer reading
@@ -506,9 +508,10 @@ class Protocol {
   RecvContainer *recv_container_ptr_;
 
   //! map from the pair of command set and id, to the circular buffer of receive container
+  //   //shared_ptr创建对象的时候，返回指针，同时也申请了内存空间
   std::map<std::pair<uint8_t, uint8_t>, std::shared_ptr<CircularBuffer<RecvContainer>>> buffer_pool_map_;
   //! if receive pool should run
-  std::atomic<bool> running_;
+  std::atomic<bool> running_;   //C++11原子类，多线程访问保证不会出现竞争
 
   //! automatic repeat send thread
   std::thread send_poll_thread_;
