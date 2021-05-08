@@ -7,6 +7,8 @@ find_package(Threads REQUIRED)
 
 find_package(OpenCV REQUIRED)
 
+# find_package(MVS REQUIRED)
+
 find_package(catkin REQUIRED COMPONENTS
   roscpp
   tf
@@ -30,14 +32,28 @@ add_executable(ambition_vision2021
   common/thread_control/thread_control.cpp
 )
 
-# link_directories(
-#   /opt/MVS/lib/64
-# )
+link_directories(
+  /opt/MVS/lib/64
+)
 
 target_link_libraries(ambition_vision2021 PUBLIC
   # pthread
   ${OpenCV_LIBS}
-  /opt/MVS/lib/64
+  # ${MVS_LIBS}
+
+FormatConversion
+MediaProcess
+MvUsb3vTL
+GCBase_gcc421_v3_0
+MvCameraControl
+GenApi_gcc421_v3_0
+NodeMapData_gcc421_v3_0
+log4cpp_gcc421_v3_0
+MVGigEVisionSDK
+XmlParser_gcc421_v3_0
+Log_gcc421_v3_0
+MathParser_gcc421_v3_0
+MVRender
 
   ${catkin_LIBRARIES}
 )
