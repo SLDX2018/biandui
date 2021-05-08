@@ -31,7 +31,7 @@ Chassis::~Chassis(){
 }
 void Chassis::SDK_Init(){
 
-  verison_client_ = handle_->CreateClient<roborts_sdk::cmd_version_id, roborts_sdk::cmd_version_id> //cmd, ack 都是cmd_version_id类型
+  verison_client_ = handle_->CreateClient<roborts_sdk::cmd_version_id,roborts_sdk::cmd_version_id>
       (UNIVERSAL_CMD_SET, CMD_REPORT_VERSION,
        MANIFOLD2_ADDRESS, CHASSIS_ADDRESS);
   roborts_sdk::cmd_version_id version_cmd;
@@ -41,17 +41,15 @@ void Chassis::SDK_Init(){
                                     [](roborts_sdk::Client<roborts_sdk::cmd_version_id,
                                                            roborts_sdk::cmd_version_id>::SharedFuture future) {
                                       ROS_INFO("Chassis Firmware Version: %d.%d.%d.%d",
-                                               int(future.get()->version_id>>24 & 0xFF),
-                                               int(future.get()->version_id>>16 & 0xFF),
-                                               int(future.get()->version_id>>8 & 0xFF),
-                                               int(future.get()->version_id & 0xFF));
+                                               int(future.get()->version_id>>24&0xFF),
+                                               int(future.get()->version_id>>16&0xFF),
+                                               int(future.get()->version_id>>8&0xFF),
+                                               int(future.get()->version_id&0xFF));
                                     });
 
   handle_->CreateSubscriber<roborts_sdk::cmd_chassis_info>(CHASSIS_CMD_SET, CMD_PUSH_CHASSIS_INFO,
                                                            CHASSIS_ADDRESS, MANIFOLD2_ADDRESS,
-                                                           std::bind(&Chassis::ChassisInfoCallback, this, std::placeholders::_1));  //std::bind 第一个参数为函数地址，对于成员函数而言必须显性的 &取地址
-                                                           // bind 即对函数的参数进行绑定，类似重映射函数的参数位置关系，默认值等
-                                                           // 关于bind的详细解释 https://blog.csdn.net/tennysonsky/article/details/77447804
+                                                           std::bind(&Chassis::ChassisInfoCallback, this, std::placeholders::_1));
   handle_->CreateSubscriber<roborts_sdk::cmd_uwb_info>(COMPATIBLE_CMD_SET, CMD_PUSH_UWB_INFO,
                                                        CHASSIS_ADDRESS, MANIFOLD2_ADDRESS,
                                                        std::bind(&Chassis::UWBInfoCallback, this, std::placeholders::_1));

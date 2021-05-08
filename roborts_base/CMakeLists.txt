@@ -31,21 +31,3 @@ target_include_directories(roborts_base_node PUBLIC
   ${catkin_INCLUDE_DIRS})
 add_dependencies(roborts_base_node roborts_msgs_generate_messages)
 
-
-add_executable(test4sdk
-  roborts_sdk/test/sdk_test.cpp
-  chassis/chassis.cpp
-  gimbal/gimbal.cpp
-  referee_system/referee_system.cpp
-  roborts_sdk/dispatch/execution.cpp
-  roborts_sdk/dispatch/handle.cpp
-  roborts_sdk/protocol/protocol.cpp
-  roborts_sdk/hardware/serial_device.cpp
-  )
-
-target_link_libraries(test4sdk PUBLIC
-  Threads::Threads
-  ${GLOG_LIBRARY}
-  ${catkin_LIBRARIES})
-target_include_directories(test4sdk PUBLIC
-  ${catkin_INCLUDE_DIRS})

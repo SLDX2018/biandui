@@ -39,12 +39,12 @@ class Service;
 /**
  * @brief Handle class in the dispatch layer
  */
-class Handle : public std::enable_shared_from_this<Handle> {    //enable_shared_from_this是一个模板类，智能指针，保证共享 https://blog.csdn.net/caoshangpa/article/details/79392878
+class Handle : public std::enable_shared_from_this<Handle> {
   //TODO: make this singleton
  public:
-  template<typename Cmd>    //声明友元类
+  template<typename Cmd>
   friend
-  class Subscription;   //分发层的订阅功能实现类
+  class Subscription;
   template<typename Cmd>
   friend
   class Publisher;
@@ -58,7 +58,7 @@ class Handle : public std::enable_shared_from_this<Handle> {    //enable_shared_
    * @brief Constructor of Handle, instantiate the object of the hardware layer and protocol layer
    * @param serial_port
    */
-  explicit Handle(std::string serial_port);   //explicit 取消隐性类型转换 https://blog.csdn.net/guoyunfei123/article/details/89003369
+  explicit Handle(std::string serial_port);
   /**
    * @brief Initialize the hardware layer and protocol layer
    * @return True if both initialize successfully;

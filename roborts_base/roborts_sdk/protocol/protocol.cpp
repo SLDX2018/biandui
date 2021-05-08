@@ -246,7 +246,7 @@ bool Protocol::SendRequest(const CommandInfo *command_info,   //command_info是�
                            void *message_data) {            //接收到的消息体
   return SendCMD(command_info->cmd_set, command_info->cmd_id,
                  command_info->receiver, message_data, command_info->length,
-                 CMDSessionMode::CMD_SESSION_AUTO, message_header);   //ack_timeout 和retry_time 有默认值
+                 CMDSessionMode::CMD_SESSION_AUTO, message_header);
 }
 bool Protocol::SendMessage(const CommandInfo *command_info,   //直接发送数据，不需要ack
                            void *message_data) {
@@ -284,7 +284,7 @@ CMDSession *Protocol::AllocCMDSession(CMDSessionMode session_mode, uint16_t size
       DLOG_ERROR << "session " << static_cast<uint32_t>(session_mode) << " is busy\n";
       return nullptr;
     }
-  } else {    //session_mode=32 必须收到ack
+  } else {
     for (i = 2; i < SESSION_TABLE_NUM; i++) {   //找到第一个空闲的session
       if (cmd_session_table_[i].usage_flag == 0) {
         break;
@@ -361,13 +361,13 @@ bool Protocol::SendCMD(uint8_t cmd_set, uint8_t cmd_id, uint8_t receiver,
     return false;
   }
   pack_length = HEADER_LEN +
-      CMD_SET_PREFIX_LEN +    // 命令码
+      CMD_SET_PREFIX_LEN +
       data_length + CRC_DATA_LEN;
 
   //second get the param into the session
   switch (session_mode) {
 
-    case CMDSessionMode::CMD_SESSION_0: //不需要ack
+    case CMDSessionMode::CMD_SESSION_0:
       //lock
       memory_pool_ptr_->LockMemory();
       cmd_session_ptr = AllocCMDSession(CMDSessionMode::CMD_SESSION_0, pack_length);
@@ -400,11 +400,11 @@ bool Protocol::SendCMD(uint8_t cmd_set, uint8_t cmd_id, uint8_t receiver,
       }
 
       // pack the cmd prefix ,data and data crc into memory block one by one
-      memcpy(cmd_session_ptr->memory_block_ptr->memory_ptr + HEADER_LEN, cmd_set_prefix, CMD_SET_PREFIX_LEN);   // 命令码
-      memcpy(cmd_session_ptr->memory_block_ptr->memory_ptr + HEADER_LEN + CMD_SET_PREFIX_LEN, data_ptr, data_length); // 数据部分
+      memcpy(cmd_session_ptr->memory_block_ptr->memory_ptr + HEADER_LEN, cmd_set_prefix, CMD_SET_PREFIX_LEN);
+      memcpy(cmd_session_ptr->memory_block_ptr->memory_ptr + HEADER_LEN + CMD_SET_PREFIX_LEN, data_ptr, data_length);
 
       crc_data = CRC32Calc(cmd_session_ptr->memory_block_ptr->memory_ptr, pack_length - CRC_DATA_LEN);
-      memcpy(cmd_session_ptr->memory_block_ptr->memory_ptr + pack_length - CRC_DATA_LEN, &crc_data, CRC_DATA_LEN);  //数据部分的CRC校验
+      memcpy(cmd_session_ptr->memory_block_ptr->memory_ptr + pack_length - CRC_DATA_LEN, &crc_data, CRC_DATA_LEN);
 
       // send it using device
       DeviceSend(cmd_session_ptr->memory_block_ptr->memory_ptr);
@@ -415,10 +415,10 @@ bool Protocol::SendCMD(uint8_t cmd_set, uint8_t cmd_id, uint8_t receiver,
       memory_pool_ptr_->UnlockMemory();
       break;
 
-    case CMDSessionMode::CMD_SESSION_1: //需要但不必需ack
+    case CMDSessionMode::CMD_SESSION_1:
       //lock
       memory_pool_ptr_->LockMemory();
-      cmd_session_ptr = AllocCMDSession(CMDSessionMode::CMD_SESSION_1, pack_length);  //对CMD会话表里面的一个元素的memory_block_ptr字段申请内存空间
+      cmd_session_ptr = AllocCMDSession(CMDSessionMode::CMD_SESSION_1, pack_length);
 
       if (cmd_session_ptr == nullptr) {
         //unlock
@@ -428,7 +428,7 @@ bool Protocol::SendCMD(uint8_t cmd_set, uint8_t cmd_id, uint8_t receiver,
       }
 
       //may be used more than once, seq_num_ should increase if duplicated.
-      if (seq_num_ == cmd_session_ptr->pre_seq_num) {   //cmd_session_ptr是CMD会话表中某个元素的指针，申请释放空间只是针对memory_block_ptr字段，因此pre_seq_num会保留
+      if (seq_num_ == cmd_session_ptr->pre_seq_num) {
         seq_num_++;
       }
 
