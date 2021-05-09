@@ -137,11 +137,11 @@ void Protocol::ReceivePool() {
                                         container_ptr->command_info.cmd_id)]
             = std::make_shared<CircularBuffer<RecvContainer>>(100);   //直接赋值就可以把元素插入map容器，这里只是向map容器中放了一个空的RecvContainer对象
 
-        DLOG_INFO<<"Capture command: "
-                 <<"cmd set: 0x"<< std::setw(2) << std::hex << std::setfill('0') << int(container_ptr->command_info.cmd_set)
-                 <<", cmd id: 0x"<< std::setw(2) << std::hex << std::setfill('0') << int(container_ptr->command_info.cmd_id)
-                 <<", sender: 0x"<< std::setw(2) << std::hex << std::setfill('0') << int(container_ptr->command_info.sender)
-                 <<", receiver: 0x" <<std::setw(2) << std::hex << std::setfill('0') << int(container_ptr->command_info.receiver);
+        // std::cout<<"Capture command: "
+        //          <<"cmd set: 0x"<< std::setw(2) << std::hex << std::setfill('0') << int(container_ptr->command_info.cmd_set)
+        //          <<", cmd id: 0x"<< std::setw(2) << std::hex << std::setfill('0') << int(container_ptr->command_info.cmd_id)
+        //          <<", sender: 0x"<< std::setw(2) << std::hex << std::setfill('0') << int(container_ptr->command_info.sender)
+        //          <<", receiver: 0x" <<std::setw(2) << std::hex << std::setfill('0') << int(container_ptr->command_info.receiver);
 
       }
       //1 time copy
@@ -250,6 +250,8 @@ bool Protocol::SendRequest(const CommandInfo *command_info,   //command_info是�
 }
 bool Protocol::SendMessage(const CommandInfo *command_info,   //直接发送数据，不需要ack
                            void *message_data) {
+                             
+  std::cout << "hello" << "file:" << __FILE__ << "@"<< __LINE__ << "\r\n";
   return SendCMD(command_info->cmd_set, command_info->cmd_id,
                  command_info->receiver, message_data, command_info->length,
                  CMDSessionMode::CMD_SESSION_0);
@@ -368,6 +370,7 @@ bool Protocol::SendCMD(uint8_t cmd_set, uint8_t cmd_id, uint8_t receiver,
   switch (session_mode) {
 
     case CMDSessionMode::CMD_SESSION_0:
+  std::cout << "hello" << "file:" << __FILE__ << "@"<< __LINE__ << "\r\n";
       //lock
       memory_pool_ptr_->LockMemory();
       cmd_session_ptr = AllocCMDSession(CMDSessionMode::CMD_SESSION_0, pack_length);
@@ -413,6 +416,8 @@ bool Protocol::SendCMD(uint8_t cmd_set, uint8_t cmd_id, uint8_t receiver,
       FreeCMDSession(cmd_session_ptr);
       //unlock
       memory_pool_ptr_->UnlockMemory();
+      
+  std::cout << "hello" << "file:" << __FILE__ << "@"<< __LINE__ << "\r\n";
       break;
 
     case CMDSessionMode::CMD_SESSION_1:
@@ -708,6 +713,10 @@ bool Protocol::StreamHandler(uint8_t byte) {    //保存一个字节到recv_stre
 bool Protocol::CheckStream() {         //检查是不是一个数据包的开始，找到完整数据包
   Header *header_ptr = (Header *) (recv_stream_ptr_->recv_buff);
 
+  // std::cout << "header_sof" << header_ptr->sof  <<  std::endl
+  //           <<  "header_receiver" << header_ptr->receiver;
+
+
   bool is_frame = false;
   if (recv_stream_ptr_->recv_index < HEADER_LEN) {  //帧头长度
     return false;
@@ -729,6 +738,7 @@ bool Protocol::VerifyHeader() {   //检查帧头
       (header_ptr->reserved1 == 0) && (header_ptr->receiver == DEVICE || header_ptr->receiver == 0xFF) &&
       CRCHeadCheck((uint8_t *) header_ptr, HEADER_LEN)) {   //帧头数据正确CRC通过
     // It is an unused part because minimum package is at least longer than a header
+  std::cout << "file:" << __FILE__ << "@"<< __LINE__ << "\r\n";
     if (header_ptr->length == HEADER_LEN) {   //
 
       is_frame = ContainerHandler();    //容器搬运？？********************

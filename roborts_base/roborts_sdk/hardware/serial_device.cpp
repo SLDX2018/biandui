@@ -17,6 +17,9 @@
 
 #include "serial_device.h"
 
+#include <iostream>
+#include <iomanip>
+
 namespace roborts_sdk {
 SerialDevice::SerialDevice(std::string port_name,
                            int baudrate) :
@@ -158,6 +161,7 @@ bool SerialDevice::ConfigDevice() {
 int SerialDevice::Read(uint8_t *buf, int len) {
   int ret = -1;
 
+  std::cout << "file:" << __FILE__ << "@"<< __LINE__ << "\r\n";
   if (NULL == buf) {
     return -1;
   } else {
@@ -171,6 +175,8 @@ int SerialDevice::Read(uint8_t *buf, int len) {
       LOG_INFO << "Reconnect Success.";
       ret = read(serial_fd_, buf, len);   //返回值为实际读到的字节数
     }
+
+    std::cout << "ret = " << ret;
     return ret;
   }
 }

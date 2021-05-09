@@ -43,7 +43,7 @@ int main() {
     //串口接收线程
     std::thread serial_task(&ThreadControl::serial_receive,&ImageControl);
 
-
+while(1);
 
     //produce_task.join();
     vision_proceduce_task.join();

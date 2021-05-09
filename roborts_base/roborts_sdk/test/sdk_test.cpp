@@ -21,48 +21,54 @@
 #include "../protocol/protocol_define.h"
 
 int main() {
-  auto h=std::make_shared<Handle>();
-  int count;
+  auto h=std::make_shared<roborts_sdk::Handle>("/dev/serial_sdk");
+  
+  if(!h->Init()) return 1;
+  int count = 3;
 
   /*-----------Subscriber Test-------------*/
-  auto func = [&count] (const std::shared_ptr<p_chassis_info_t> message) -> void{
-    DLOG_INFO<<"chassis_msg_"<<count<<" : "<<(int)(message->position_x_mm);
+  auto func = [&count] (const std::shared_ptr<roborts_sdk::cmd_chassis_info> message) -> void{
+    std::cout<<"chassis_msg_"<<count<<" : " << std::hex <<(int)(message.get()->position_x_mm) << std::endl;
     count++;
   };
-  auto func2 = [&count] (const std::shared_ptr<p_uwb_data_t> message) -> void{
-    DLOG_INFO<<"chassis_msg_"<<count<<" : "<<(int)message->error;
+
+  // auto func2 = [&count] (const std::shared_ptr<roborts_sdk::cmd_uwb_info> message) -> void{
+  //   std::cout<<"chassis_msg_"<<count<<" : "<<(int)message->error;
+  //   count++;
+  // };
+  auto func3 = [&count] (const std::shared_ptr<roborts_sdk::cmd_gimbal_info> message) -> void{
+    std::cout<<"chassis_msg_"<<count<<" : "<<(float)message->pitch_ecd_angle;
     count++;
   };
-  auto func3 = [&count] (const std::shared_ptr<p_gimbal_info_t> message) -> void{
-    DLOG_INFO<<"chassis_msg_"<<count<<" : "<<(float)message->pit_relative_angle;
-    count++;
-  };
-  auto sub1=h->CreateSubscriber<p_chassis_info_t>(CHASSIS_CMD_SET,PUSH_CHASSIS_INFO,CHASSIS_ADDRESS,MANIFOLD2_ADDRESS,func);
-  auto sub2=h->CreateSubscriber<p_uwb_data_t>(CHASSIS_CMD_SET,PUSH_UWB_INFO,CHASSIS_ADDRESS,MANIFOLD2_ADDRESS,func2);
-  auto sub3=h->CreateSubscriber<p_gimbal_info_t>(GIMBAL_CMD_SET,PUSH_GIMBAL_INFO,GIMBAL_ADDRESS,BROADCAST_ADDRESS,func3);
+
+  auto sub1=h->CreateSubscriber<roborts_sdk::cmd_chassis_info>(CHASSIS_CMD_SET,CMD_PUSH_CHASSIS_INFO,CHASSIS_ADDRESS,MANIFOLD2_ADDRESS,func);
+  // auto sub2=h->CreateSubscriber<roborts_sdk::cmd_uwb_info>(CHASSIS_CMD_SET,CMD_PUSH_UWB_INFO,CHASSIS_ADDRESS,MANIFOLD2_ADDRESS,func2);
+  auto sub3=h->CreateSubscriber<roborts_sdk::cmd_gimbal_info>(GIMBAL_CMD_SET,CMD_PUSH_GIMBAL_INFO,GIMBAL_ADDRESS,BROADCAST_ADDRESS,func3);
 
   /*-----------Publisher Test-------------*/
-  auto pub1 = h->CreatePublisher<p_chassis_speed_t>(CHASSIS_CMD_SET,CTRL_CHASSIS_SPEED,MANIFOLD2_ADDRESS,CHASSIS_ADDRESS);
-  p_chassis_speed_t chassis_speed;
-  chassis_speed.rotate_x_offset=0;
-  chassis_speed.rotate_y_offset=0;
-  chassis_speed.vx=100;
-  chassis_speed.vy=0;
-  chassis_speed.vw=0;
-  chassis_speed.res=0;
-  pub1->Publish(chassis_speed);
+  // auto pub1 = h->CreatePublisher<roborts_sdk::cmd_chassis_speed>(CHASSIS_CMD_SET,CMD_SET_CHASSIS_SPEED,MANIFOLD2_ADDRESS,CHASSIS_ADDRESS);
+  // roborts_sdk::cmd_chassis_speed chassis_speed;
+  // chassis_speed.rotate_x_offset=0;
+  // chassis_speed.rotate_y_offset=0;
+  // chassis_speed.vx=0x1234;
+  // chassis_speed.vy=0;
+  // chassis_speed.vw=0;
+  // pub1->Publish(chassis_speed);
+
 
    /*-----------Client Test-------------*/
-  auto client1=h->CreateClient<chassis_mode_e,chassis_mode_e>(CHASSIS_CMD_SET,SET_CHASSIS_MODE,MANIFOLD2_ADDRESS,CHASSIS_ADDRESS);
-  auto mode = std::make_shared<chassis_mode_e>(SEPARATE_GIMBAL);
+  // auto client1=h->CreateClient<chassis_mode_e,chassis_mode_e>(CHASSIS_CMD_SET,SET_CHASSIS_MODE,MANIFOLD2_ADDRESS,CHASSIS_ADDRESS);
+  // auto mode = std::make_shared<chassis_mode_e>(SEPARATE_GIMBAL);
 
-  client1->AsyncSendRequest(mode,[](Client<chassis_mode_e,chassis_mode_e>::SharedFuture){
-    std::cout<<"get!"<<std::endl;
-  });
+  // client1->AsyncSendRequest(mode,[](Client<chassis_mode_e,chassis_mode_e>::SharedFuture){
+  //   std::cout<<"get!"<<std::endl;
+  // });
 
   while(true){
     h->Spin();
-    usleep(10);
+    
+    sleep(1);
+    
   }
 
 

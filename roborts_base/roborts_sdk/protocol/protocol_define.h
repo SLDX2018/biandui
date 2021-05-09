@@ -123,7 +123,7 @@ typedef struct {
 #define CMD_PUSH_GIMBAL_INFO           (0X01u)
 typedef struct {
   uint8_t mode;
-  int16_t pitch_ecd_angle;
+  int16_t pitch_ecd_angle;    //编码器
   int16_t yaw_ecd_angle;
   int16_t pitch_gyro_angle;
   int16_t yaw_gyro_angle;

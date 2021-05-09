@@ -68,9 +68,3 @@ target_include_directories(ambition_vision2021 PUBLIC
 
   ${catkin_INCLUDE_DIRS}
 )
-
-
-add_executable(ttt
-  test2.cpp
-  hktest/cc.cpp
-)

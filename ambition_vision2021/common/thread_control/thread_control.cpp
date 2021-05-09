@@ -12,7 +12,7 @@
 #define BUFF_VIDEO_PATH "/home/sldx/桌面/机器人视角红色背景暗24.mp4"
 #define ARMOR_VIDEO_PATH "/home/coumputer/桌d面/炮台素材红车旋转-ev--3.MOV"
 
-#define IMAGESHOW  //展示图片
+// #define IMAGESHOW  //展示图片
 #define SHOW_FRAME //显示帧率
 //#define DEBUG_VIDEO 1  //暂时没用到，有bug
 
@@ -29,7 +29,7 @@ static volatile unsigned int save_image_index;  // 保存图像序号
 
 int serial_1 = -1;//句柄
 #ifdef GET_STM32_THREAD
-SerialPort Serial = SerialPort(serial_1,"/dev/ttyUSB",115200);                 // pc与stm32之间的串口通信
+SerialPort Serial = SerialPort(serial_1,"/dev/serial_sdk",115200);                 // pc与stm32之间的串口通信
 #endif
 float a_coefficient=0;
 

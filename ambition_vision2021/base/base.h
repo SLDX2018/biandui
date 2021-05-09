@@ -38,7 +38,7 @@ struct OtherParam
 #define COLOR_TH 20   //颜色阈值
 #define DEBUG_BUFF_DETECT  //比赛要调
 //****** 装甲板识别配置 *****
-#define ARMOR_TRACK_BAR //uuse 装甲板滑动条
+// #define ARMOR_TRACK_BAR //uuse 装甲板滑动条
 #define DEBUG_ARMOR_DETECT  //调试装甲板绘制信息
 
 #define ROI_ENABLE      // 启用roi

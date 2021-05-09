@@ -9,7 +9,7 @@ find_package(catkin REQUIRED COMPONENTS
   roscpp
   tf
   roborts_msgs
-  )
+)
 
 catkin_package()
 
@@ -22,12 +22,34 @@ add_executable(roborts_base_node
   roborts_sdk/dispatch/handle.cpp
   roborts_sdk/protocol/protocol.cpp
   roborts_sdk/hardware/serial_device.cpp
-  )
+)
 target_link_libraries(roborts_base_node PUBLIC
   Threads::Threads
   ${GLOG_LIBRARY}
-  ${catkin_LIBRARIES})
+  ${catkin_LIBRARIES}
+)
 target_include_directories(roborts_base_node PUBLIC
-  ${catkin_INCLUDE_DIRS})
+  ${catkin_INCLUDE_DIRS}
+)
 add_dependencies(roborts_base_node roborts_msgs_generate_messages)
 
+
+add_executable(sdk_test
+  roborts_sdk/test/sdk_test.cpp
+  chassis/chassis.cpp
+  gimbal/gimbal.cpp
+  referee_system/referee_system.cpp
+  roborts_sdk/dispatch/execution.cpp
+  roborts_sdk/dispatch/handle.cpp
+  roborts_sdk/protocol/protocol.cpp
+  roborts_sdk/hardware/serial_device.cpp
+  )
+target_link_libraries(sdk_test PUBLIC
+  Threads::Threads
+  ${GLOG_LIBRARY}
+  ${catkin_LIBRARIES}
+)
+target_include_directories(sdk_test PUBLIC
+  ${catkin_INCLUDE_DIRS}
+)
+add_dependencies(sdk_test roborts_msgs_generate_messages)
