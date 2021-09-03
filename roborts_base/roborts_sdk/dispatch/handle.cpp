@@ -20,7 +20,7 @@
 namespace roborts_sdk {
 Handle::Handle(std::string serial_port) {
   serial_port_ = serial_port;
-  device_ = std::make_shared<SerialDevice>(serial_port_, 115200);
+  device_ = std::make_shared<SerialDevice>(serial_port_, 1000000);
   protocol_ = std::make_shared<Protocol>(device_);
 
 }
@@ -36,6 +36,7 @@ bool Handle::Init(){
     return false;
   }
   executor_ = std::make_shared<Executor>(shared_from_this());
+  LOG_INFO<<"Initialization of protocol layer and dispatch layer succeeded. ";
   LOG_INFO<<"Initialization of protocol layer and dispatch layer succeeded. ";
   return true;
 }

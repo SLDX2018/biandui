@@ -20,10 +20,10 @@ int main(int argc, char **argv) {
   auto blackboard = new roborts_decision::Blackboard(full_path);
 
   roborts_decision::BackBootAreaBehavior back_boot_area_behavior(chassis_executor, blackboard, full_path);
-  roborts_decision::ChaseBehavior        chase_behavior(chassis_executor, blackboard, full_path);
-  roborts_decision::SearchBehavior       search_behavior(chassis_executor, blackboard, full_path);
-  roborts_decision::EscapeBehavior       escape_behavior(chassis_executor, blackboard, full_path);
-  roborts_decision::PatrolBehavior       patrol_behavior(chassis_executor, blackboard, full_path);
+  // roborts_decision::ChaseBehavior        chase_behavior(chassis_executor, blackboard, full_path);
+  // roborts_decision::SearchBehavior       search_behavior(chassis_executor, blackboard, full_path);
+  // roborts_decision::EscapeBehavior       escape_behavior(chassis_executor, blackboard, full_path);
+  // roborts_decision::PatrolBehavior       patrol_behavior(chassis_executor, blackboard, full_path);
   roborts_decision::GoalBehavior       goal_behavior(chassis_executor, blackboard);
 
   auto command_thread= std::thread(Command);
@@ -35,22 +35,22 @@ int main(int argc, char **argv) {
       case '1':
         back_boot_area_behavior.Run();
         break;
-        //patrol
-      case '2':
-        patrol_behavior.Run();
-        break;
-        //chase.
-      case '3':
-        chase_behavior.Run();
-        break;
-        //search
-      case '4':
-        search_behavior.Run();
-        break;
-        //escape.
-      case '5':
-        escape_behavior.Run();
-        break;
+      //   //patrol
+      // case '2':
+      //   patrol_behavior.Run();
+      //   break;
+      //   //chase.
+      // case '3':
+      //   chase_behavior.Run();
+      //   break;
+      //   //search
+      // case '4':
+      //   search_behavior.Run();
+      //   break;
+      //   //escape.
+      // case '5':
+      //   escape_behavior.Run();
+      //   break;
         //goal.
       case '6':
         goal_behavior.Run();

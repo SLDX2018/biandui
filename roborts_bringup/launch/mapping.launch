@@ -1,6 +1,9 @@
 <launch>
   <master auto="start"/>
 
+  <!-- Run the robot sdk interface -->
+  <include file="$(find roborts_bringup)/launch/base.launch" />
+
   <!-- Run the lidar -->
   <node name="rplidar_node" pkg="rplidar_ros" type="rplidarNode" output="screen">
       <param name="serial_port" type="string" value="/dev/rplidar"/>
@@ -9,6 +12,10 @@
       <param name="inverted" type="bool" value="false"/>
       <param name="angle_compensate" type="bool" value="true"/>
   </node>
+
+
+  <!-- Run the laser_filters 过滤云台遮挡-->
+  <include file="$(find laser_filters)/examples/ab_laser_filter.launch"/>
 
   <!-- Run the slam gmapping -->
   <include file="$(find roborts_bringup)/launch/slam_gmapping.xml"/>

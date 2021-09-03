@@ -7,8 +7,8 @@
  *  (at your option) any later version.
  *
  *  This program is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of 
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of 
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  *  GNU General Public License for more details.
  *
  *  You should have received a copy of the GNU General Public License
@@ -56,6 +56,18 @@ int main() {
   // pub1->Publish(chassis_speed);
 
 
+   auto pubtest = h->CreatePublisher<roborts_sdk::cmd_chassis_info>(CHASSIS_CMD_SET,CMD_PUSH_CHASSIS_INFO,CHASSIS_ADDRESS,MANIFOLD2_ADDRESS);
+   roborts_sdk::cmd_chassis_info chassis_info;
+   chassis_info.gyro_angle = 0x1234;
+   chassis_info.gyro_rate = 0x5678;
+   chassis_info.position_x_mm = 0xABCDABCD;
+   chassis_info.position_y_mm = 0x12345678;
+   chassis_info.angle_deg = 0xABCD;
+   chassis_info.v_x_mm = 0xABCD;
+   chassis_info.v_y_mm = 0xABCD;
+   pubtest->Publish(chassis_info);
+
+
    /*-----------Client Test-------------*/
   // auto client1=h->CreateClient<chassis_mode_e,chassis_mode_e>(CHASSIS_CMD_SET,SET_CHASSIS_MODE,MANIFOLD2_ADDRESS,CHASSIS_ADDRESS);
   // auto mode = std::make_shared<chassis_mode_e>(SEPARATE_GIMBAL);
@@ -67,7 +79,8 @@ int main() {
   while(true){
     h->Spin();
     
-    sleep(1);
+//    sleep(1);
+//    pubtest->Publish(chassis_info);
     
   }
 

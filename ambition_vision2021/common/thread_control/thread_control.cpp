@@ -21,6 +21,7 @@
 //#define dubug_recive
 using namespace std;
 
+static void pub_msg_(const VisionData &data, ros::Publisher pub_);
 
 static volatile unsigned int produce_index;     // 图像生成序号，用于线程之间逻辑
 static volatile unsigned int gimbal_data_index;     // gimbal data 生成序号，用于线程之间逻辑
@@ -29,7 +30,7 @@ static volatile unsigned int save_image_index;  // 保存图像序号
 
 int serial_1 = -1;//句柄
 #ifdef GET_STM32_THREAD
-SerialPort Serial = SerialPort(serial_1,"/dev/serial_sdk",115200);                 // pc与stm32之间的串口通信
+// SerialPort Serial = SerialPort(serial_1,"/dev/serial_sdk",115200);                 // pc与stm32之间的串口通信
 #endif
 float a_coefficient=0;
 
@@ -73,7 +74,7 @@ void ThreadControl::ImageProduce()
 }
 
 // 图像处理线程
-void ThreadControl::ImageProcess()
+void ThreadControl::ImageProcess(ros::Publisher pub_)
 {
 
 
@@ -214,7 +215,10 @@ void ThreadControl::ImageProcess()
         if(command==1)
         {
             flag=0;
-            Serial.send_data(serial_1,tx_data);
+//  ros里面接管串口发送，不在这个里面实现串口发送，通过ros话题转发消息，到roborts_sdk中再操作具体的硬件，把视觉的信息传出
+            pub_msg_(tx_data, pub_);
+
+            // Serial.send_data(serial_1,tx_data, pub_);
  #ifdef dubug_recive
             {
                 int num;
@@ -244,7 +248,11 @@ void ThreadControl::ImageProcess()
             flag=1;
             tx_data.yaw_angle.f = 200;
             tx_data.pitch_angle.f =200;
-            Serial.send_data(serial_1,tx_data);
+
+//  ros里面接管串口发送，不在这个里面实现串口发送，通过ros话题转发消息，到roborts_sdk中再操作具体的硬件，把视觉的信息传出
+            pub_msg_(tx_data, pub_);
+
+            // Serial.send_data(serial_1,tx_data, pub_);
         }
 #ifdef SHOW_FRAME
         auto t2=chrono::high_resolution_clock::now();
@@ -313,7 +321,39 @@ void ThreadControl::ImageWrite()
 
 
 
+static void pub_msg_(const VisionData &data, ros::Publisher pub_)
+{
+    uint8_t Tdata[18];
+    
+    Tdata[0] = 0xA5;
+    Tdata[1] = data.mode;
 
+    Tdata[2] = data.yaw_angle.c[0];
+    Tdata[3] = data.yaw_angle.c[1];
+    Tdata[4] = data.yaw_angle.c[2];
+    Tdata[5] = data.yaw_angle.c[3];
+
+    Tdata[6] = data.pitch_angle.c[0];
+    Tdata[7] = data.pitch_angle.c[1];
+    Tdata[8] = data.pitch_angle.c[2];
+    Tdata[9] = data.pitch_angle.c[3];
+
+    Tdata[10] =data.distance.c[0];
+    Tdata[11] =data.distance.c[1];
+    Tdata[12] =data.distance.c[2];
+    Tdata[13] =data.distance.c[3];
+
+    Tdata[14] = data.command;
+    Tdata[15]=0XEE;
+    Tdata[16]=0;        //reserve
+    Tdata[17]=0;        //reserve
+    printf("send x:%f y:%f z:%f\r\n",data.yaw_angle.f,data.pitch_angle.f,data.distance.f);
+
+
+    roborts_msgs::AmbitionVision ambition_vision_msg;
+    std::memcpy(&ambition_vision_msg.rawdata[0], Tdata, 18);
+    pub_.publish(ambition_vision_msg);
+}
 
 
 

@@ -7,8 +7,8 @@
  *  (at your option) any later version.
  *
  *  This program is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of 
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of 
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  *  GNU General Public License for more details.
  *
  *  You should have received a copy of the GNU General Public License
@@ -250,8 +250,6 @@ bool Protocol::SendRequest(const CommandInfo *command_info,   //command_info是�
 }
 bool Protocol::SendMessage(const CommandInfo *command_info,   //直接发送数据，不需要ack
                            void *message_data) {
-                             
-  std::cout << "hello" << "file:" << __FILE__ << "@"<< __LINE__ << "\r\n";
   return SendCMD(command_info->cmd_set, command_info->cmd_id,
                  command_info->receiver, message_data, command_info->length,
                  CMDSessionMode::CMD_SESSION_0);
@@ -370,7 +368,6 @@ bool Protocol::SendCMD(uint8_t cmd_set, uint8_t cmd_id, uint8_t receiver,
   switch (session_mode) {
 
     case CMDSessionMode::CMD_SESSION_0:
-  std::cout << "hello" << "file:" << __FILE__ << "@"<< __LINE__ << "\r\n";
       //lock
       memory_pool_ptr_->LockMemory();
       cmd_session_ptr = AllocCMDSession(CMDSessionMode::CMD_SESSION_0, pack_length);
@@ -391,6 +388,7 @@ bool Protocol::SendCMD(uint8_t cmd_set, uint8_t cmd_id, uint8_t receiver,
       header_ptr->is_ack = 0;
       header_ptr->reserved0 = 0;
       header_ptr->sender = DEVICE;
+//      header_ptr->sender = 0x01;    //chassis_addr test
       header_ptr->receiver = receiver;
       header_ptr->reserved1 = 0;
       header_ptr->seq_num = seq_num_;
@@ -416,8 +414,6 @@ bool Protocol::SendCMD(uint8_t cmd_set, uint8_t cmd_id, uint8_t receiver,
       FreeCMDSession(cmd_session_ptr);
       //unlock
       memory_pool_ptr_->UnlockMemory();
-      
-  std::cout << "hello" << "file:" << __FILE__ << "@"<< __LINE__ << "\r\n";
       break;
 
     case CMDSessionMode::CMD_SESSION_1:
@@ -722,7 +718,9 @@ bool Protocol::CheckStream() {         //检查是不是一个数据包的开始
     return false;
   } else if (recv_stream_ptr_->recv_index == HEADER_LEN) {  //帧头校验
     is_frame = VerifyHeader();
+  // std::cout << "file:" << __FILE__ << ":"<< __LINE__ << "\r\n";
   } else if (recv_stream_ptr_->recv_index == header_ptr->length) {  //数据域校验
+  // std::cout << "file:" << __FILE__ << ":"<< __LINE__ << "\r\n";
     is_frame = VerifyData();
   }
 
@@ -738,7 +736,6 @@ bool Protocol::VerifyHeader() {   //检查帧头
       (header_ptr->reserved1 == 0) && (header_ptr->receiver == DEVICE || header_ptr->receiver == 0xFF) &&
       CRCHeadCheck((uint8_t *) header_ptr, HEADER_LEN)) {   //帧头数据正确CRC通过
     // It is an unused part because minimum package is at least longer than a header
-  std::cout << "file:" << __FILE__ << "@"<< __LINE__ << "\r\n";
     if (header_ptr->length == HEADER_LEN) {   //
 
       is_frame = ContainerHandler();    //容器搬运？？********************
@@ -759,6 +756,18 @@ bool Protocol::VerifyData() {
   Header *header_ptr = (Header *) (recv_stream_ptr_->recv_buff);
   bool is_frame = false;
 
+// if(header_ptr->sof == SOF)
+// {
+//   std::cout << header_ptr->sof << "-"
+//             << header_ptr->length << "-"
+//             << header_ptr->reserved0 << "-"
+//             << header_ptr->reserved1 << "-"
+//             << header_ptr->sender << "-"
+//             << header_ptr->receiver << "-"
+//             << header_ptr->seq_num << "-"
+//             << std::endl;
+// }
+
   if (CRCTailCheck((uint8_t *) header_ptr, header_ptr->length)) {
 
     is_frame = ContainerHandler();
@@ -774,6 +783,7 @@ bool Protocol::VerifyData() {
 
 bool Protocol::ContainerHandler() {   //到这已经可以保证是完整数据包了，通过了帧头检验，开始处理数据内容  //从stream到container
 
+  // std::cout << "file:" << __FILE__ << ":"<< __LINE__ << "\r\n";
   Header *session_header_ptr = nullptr;   //通信的帧头
   Header *header_ptr = (Header *) (recv_stream_ptr_->recv_buff);
   bool is_frame = false;
@@ -832,6 +842,8 @@ bool Protocol::ContainerHandler() {   //到这已经可以保证是完整数据�
                header_ptr->length - HEADER_LEN - CMD_SET_PREFIX_LEN - CRC_DATA_LEN);
 
         is_frame = true;
+//std::cout << "file:" << __FILE__ << ":"<< __LINE__ << "\r\n";
+//std::cout << "cmd:" << recv_container_ptr_->command_info.cmd_set+0 << recv_container_ptr_->command_info.cmd_id+0 << "\r\n";
         break;
       case 1:
         //TODO: Currently regard session_1 as session_auto but never change the ack session status, ack session always stay idle status for session_1

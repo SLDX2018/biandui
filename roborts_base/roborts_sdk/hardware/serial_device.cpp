@@ -7,8 +7,8 @@
  *  (at your option) any later version.
  *
  *  This program is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of 
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of 
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  *  GNU General Public License for more details.
  *
  *  You should have received a copy of the GNU General Public License
@@ -19,6 +19,13 @@
 
 #include <iostream>
 #include <iomanip>
+
+
+// #include <boost/asio.hpp>
+// #include <boost/function.hpp>
+// #include <boost/smart_ptr.hpp>
+// #include <boost/thread.hpp>
+
 
 namespace roborts_sdk {
 SerialDevice::SerialDevice(std::string port_name,
@@ -77,7 +84,8 @@ bool SerialDevice::CloseDevice() {
 
 bool SerialDevice::ConfigDevice() {
   int st_baud[] = {B4800, B9600, B19200, B38400,
-                   B57600, B115200, B230400, B921600};
+                   B57600, B115200, B230400, B921600, B1000000, 
+                   B1152000, B3000000};
   int std_rate[] = {4800, 9600, 19200, 38400, 57600, 115200,
                     230400, 921600, 1000000, 1152000, 3000000};
   int i, j;
@@ -127,6 +135,7 @@ bool SerialDevice::ConfigDevice() {
       /* set standard baudrate */
       cfsetispeed(&new_termios_, st_baud[i]);
       cfsetospeed(&new_termios_, st_baud[i]);
+      // std::cout << "!!!!!!!!!!!" << std_rate[i] << "@@@@@@@@@@@!" << st_baud[i] << std::endl;
       break;
     }
   }
@@ -158,10 +167,79 @@ bool SerialDevice::ConfigDevice() {
 
 }
 
+
+
+// bool SerialDevice::ConfigDevice() {
+
+//     std::printf("open %s %d\r\n", port_name_.c_str(), baudrate_);
+//     serial_fd_ = ::open(port_name_.c_str(), O_RDWR | O_NDELAY);
+//     if (serial_fd_ < 0) {
+//         std::printf("open %s err\r\n", port_name_.c_str());
+//         return false;
+//     }
+
+//     tcflush(serial_fd_, TCIOFLUSH);
+
+//     int n = fcntl(serial_fd_, F_GETFL, 0);
+//     fcntl(serial_fd_, F_SETFL, n & ~O_NDELAY);
+
+//     struct termios opt;
+//     tcgetattr(serial_fd_, &opt);
+
+//     if (baudrate_ == 921600) {
+//         cfsetispeed(&opt, B921600);
+//         cfsetospeed(&opt, B921600);
+//     } else if (baudrate_ == 1500000) {
+//         cfsetispeed(&opt, B1500000);
+//         cfsetospeed(&opt, B1500000);
+//     } else { //if (baudrate_ == 115200) 
+//         cfsetispeed(&opt, B115200);
+//         cfsetospeed(&opt, B115200);
+//     } 
+
+//     opt.c_cflag &= ~CSIZE | CS8;
+//     opt.c_cflag |= (CLOCAL | CREAD);
+
+//     opt.c_cflag &= ~(PARENB|PARODD);
+//     opt.c_cflag &= ~CSTOPB;
+
+//     opt.c_cflag &= ~CRTSCTS;
+
+//     opt.c_iflag = IGNBRK;
+//     opt.c_iflag &= ~(IXON | IXOFF | IXANY);
+
+//     opt.c_lflag = 0;
+//     opt.c_oflag = 0;
+
+//     opt.c_cc[VMIN] = 18;
+//     opt.c_cc[VTIME] = 1;
+
+//     if((tcsetattr(serial_fd_, TCSANOW, &opt)) != 0)
+//         return false;
+
+//     int mcs = 0;
+//     ioctl(serial_fd_, TIOCMGET, &mcs);
+//     mcs |= TIOCM_RTS;
+//     ioctl(serial_fd_, TIOCMGET, &mcs);
+    
+//     if (tcgetattr(serial_fd_, &opt)!=0) {
+//         std::printf("tcsetattr failed\r\n");
+//     }
+
+//     opt.c_cflag &= ~CRTSCTS;
+
+//     if (tcsetattr(serial_fd_, TCSANOW, &opt)!=0) {
+//         std::printf("tcsetattr failed\r\n");
+//     }
+
+//     return true;
+// }
+
+
 int SerialDevice::Read(uint8_t *buf, int len) {
   int ret = -1;
 
-  std::cout << "file:" << __FILE__ << "@"<< __LINE__ << "\r\n";
+  // std::cout << "file:" << __FILE__ << ":"<< __LINE__ << "\r\n";
   if (NULL == buf) {
     return -1;
   } else {
@@ -175,8 +253,12 @@ int SerialDevice::Read(uint8_t *buf, int len) {
       LOG_INFO << "Reconnect Success.";
       ret = read(serial_fd_, buf, len);   //返回值为实际读到的字节数
     }
-
-    std::cout << "ret = " << ret;
+      // std::cout << "!!!!!!!!!!!!!!" << ret << std::endl;
+      // for(int i = 0; i < ret; i++)
+      // {
+      //   std::cout << std::setw(2) << std::hex << std::setfill('0') << (int)buf[i] << " ";
+      // }
+      // std::cout << "###########" << std::endl;
     return ret;
   }
 }

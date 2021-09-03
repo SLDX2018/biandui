@@ -8,6 +8,10 @@
 #include <thread>
 
 #include "camera/HIKvison.h"
+
+#include <ros/ros.h>
+#include "roborts_msgs/AmbitionVision.h"
+
 using namespace cv;
 using namespace std;
 
@@ -15,7 +19,12 @@ using namespace std;
 //#define video_save
 
 
-int main() {
+int main(int argc, char **argv) {
+
+    ros::init(argc, argv, "ambition_vision2021_node");
+    ros::NodeHandle ros_nh_;
+    ros::Publisher ros_ambition_vision_pub_;
+    ros_ambition_vision_pub_ = ros_nh_.advertise<roborts_msgs::AmbitionVision>("ambition_vision", 1);
 
     ThreadControl ImageControl;
 
@@ -34,7 +43,7 @@ int main() {
     std::thread vision_proceduce_task(&ThreadControl::vision_ImageProduce, &ImageControl,myvision,1.00);
 
     // 图像处理线程（自瞄、打符、串口）
-    std::thread process_task(&ThreadControl::ImageProcess, &ImageControl);
+    std::thread process_task(&ThreadControl::ImageProcess, &ImageControl, ros_ambition_vision_pub_);
 
     //图像生成线程（保存录像）
 #ifdef video_save
@@ -42,8 +51,6 @@ int main() {
 #endif
     //串口接收线程
     std::thread serial_task(&ThreadControl::serial_receive,&ImageControl);
-
-while(1);
 
     //produce_task.join();
     vision_proceduce_task.join();

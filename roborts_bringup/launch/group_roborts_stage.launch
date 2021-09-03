@@ -1,0 +1,8 @@
+<launch>
+
+  <group ns="sldx">
+    <include file="$(find roborts_bringup)/launch/mapping_stage.launch" />
+  </group>
+
+</launch>
+

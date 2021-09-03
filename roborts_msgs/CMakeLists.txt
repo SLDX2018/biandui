@@ -27,6 +27,8 @@ add_message_files(
     ObstacleMsg.msg
     ShootInfo.msg
     ShootState.msg
+    
+    AmbitionVision.msg
 )
 
 add_message_files(

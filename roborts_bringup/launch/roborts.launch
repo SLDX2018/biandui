@@ -1,6 +1,6 @@
 <launch>
   <master auto="start"/>
-  <arg name="map" value="icra2019"/>
+  <arg name="map" value="map0827"/>
 
   <!--Load parameters for localization node  -->
   <rosparam command="load" file="$(find roborts_localization)/config/localization.yaml" />
@@ -31,7 +31,9 @@
     <param name="inverted"            type="bool"   value="false"/>
     <param name="angle_compensate"    type="bool"   value="true"/>
   </node>
-
+  
+  <!-- Run the laser_filters 过滤云台遮挡-->
+  <include file="$(find laser_filters)/examples/ab_laser_filter.launch"/>
 
   <!-- Run the localization node -->
   <node pkg="roborts_localization" type="localization_node" name="localization_node" respawn="false" />
@@ -42,5 +44,8 @@
   <!-- Run the local planner node -->
   <node pkg="roborts_planning" type="local_planner_node" name="local_planner_node" respawn="false" />
 
+   <!-- Run the velocity converter node -->
+  <node pkg="roborts_planning" type="vel_converter" name="vel_converter_node" respawn="false" />
+  
 </launch>
 
