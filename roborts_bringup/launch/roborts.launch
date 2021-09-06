@@ -1,6 +1,6 @@
 <launch>
   <master auto="start"/>
-  <arg name="map" value="map0827"/>
+  <arg name="map" value="map0906"/>
 
   <!--Load parameters for localization node  -->
   <rosparam command="load" file="$(find roborts_localization)/config/localization.yaml" />
@@ -44,8 +44,11 @@
   <!-- Run the local planner node -->
   <node pkg="roborts_planning" type="local_planner_node" name="local_planner_node" respawn="false" />
 
-   <!-- Run the velocity converter node -->
+  <!-- Run the velocity converter node -->
   <node pkg="roborts_planning" type="vel_converter" name="vel_converter_node" respawn="false" />
+  
+  <!-- Run the behavior node -->
+  <node pkg="roborts_decision" type="behavior_test_node" name="behavior_test_node" respawn="false" />
   
 </launch>
 

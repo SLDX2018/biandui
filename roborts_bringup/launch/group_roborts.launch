@@ -1,0 +1,8 @@
+<launch>
+
+  <group ns="sldx">
+    <include file="$(find roborts_bringup)/launch/roborts.launch" />
+  </group>
+
+</launch>
+
