@@ -1,0 +1,22 @@
+<?xml version="1.0"?>
+<package>
+  <name>group_formation</name>
+  <version>0.0.1</version>
+  <description>group_formation</description>
+
+  <maintainer email="liyi4x@gmail.com">ly</maintainer>
+  <license>none</license>
+
+  <buildtool_depend>catkin</buildtool_depend>
+
+  <build_depend>roscpp</build_depend>
+    <build_depend>rospy</build_depend>
+  <build_depend>roslib</build_depend>
+  <build_depend>roborts_common</build_depend>
+
+  <run_depend>roscpp</run_depend>
+    <run_depend>rospy</run_depend>
+  <run_depend>roslib</run_depend>
+  <run_depend>roborts_common</run_depend>
+
+</package>

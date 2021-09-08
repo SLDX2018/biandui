@@ -2,11 +2,11 @@
 
 #include "executor/chassis_executor.h"
 
-#include "example_behavior/back_boot_area_behavior.h"
-#include "example_behavior/escape_behavior.h"
-#include "example_behavior/chase_behavior.h"
-#include "example_behavior/search_behavior.h"
-#include "example_behavior/patrol_behavior.h"
+// #include "example_behavior/back_boot_area_behavior.h"
+// #include "example_behavior/escape_behavior.h"
+// #include "example_behavior/chase_behavior.h"
+// #include "example_behavior/search_behavior.h"
+// #include "example_behavior/patrol_behavior.h"
 #include "example_behavior/goal_behavior.h"
 
 void Command();
