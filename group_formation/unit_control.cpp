@@ -8,6 +8,11 @@
 
 int main(int argc, char **argv)
 {
+
+  group_formation::UnitControl unitTest;
+  
+
+
   //用于解析ROS参数，第三个参数为本节点名
   ros::init(argc, argv, "unit_control");
 

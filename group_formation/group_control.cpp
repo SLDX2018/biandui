@@ -2,8 +2,9 @@
 #include <ros/package.h>
 
 #include <geometry_msgs/PoseStamped.h>
-#include <std_msgs/Header.h>
-#include "group_control.h"
+#include "io/io.h"
+#include "unit_control.h"
+#include "proto/group_formation.pb.h"
 
 int main(int argc, char **argv)
 {
