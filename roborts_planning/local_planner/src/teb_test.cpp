@@ -120,13 +120,13 @@ int main( int argc, char** argv ) {
     boost::shared_ptr<PointObstacle> pobst = boost::dynamic_pointer_cast<PointObstacle>(obst_vector.at(i));
     if (pobst) {
       CreateInteractiveMarker(pobst->Position().coeff(0),pobst->Position().coeff(1),
-                              i, "odom", &marker_server, &CB_obstacle_marker);
+                              i, "/sldx/odom", &marker_server, &CB_obstacle_marker);
     }
   }
   marker_server.applyChanges();
   
   // Setup visualization
-  visual = LocalVisualizationPtr(new LocalVisualization(nh, "odom"));
+  visual = LocalVisualizationPtr(new LocalVisualization(nh, "/sldx/odom"));
 
   RobotFootprintModelPtr model = boost::make_shared<PointRobotFootprint>();
 

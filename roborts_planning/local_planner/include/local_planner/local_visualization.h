@@ -69,7 +69,7 @@ class LocalVisualization {
   ros::Publisher pose_pub_;
 
   //! visualize frame
-  std::string visual_frame_ = "map";
+  std::string visual_frame_ = "/sldx/map";
 
   //! initialize state
   bool initialized_;

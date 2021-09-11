@@ -83,13 +83,13 @@ void Chassis::ROS_Init(){
 
 
   //ros_message_init
-  odom_.header.frame_id = "odom";
-  odom_.child_frame_id = "base_link";
+  odom_.header.frame_id = "/sldx/odom";
+  odom_.child_frame_id = "/sldx/base_link";
 
-  odom_tf_.header.frame_id = "odom";
-  odom_tf_.child_frame_id = "base_link";
+  odom_tf_.header.frame_id = "/sldx/odom";
+  odom_tf_.child_frame_id = "/sldx/base_link";
 
-  uwb_data_.header.frame_id = "uwb";
+  uwb_data_.header.frame_id = "/sldx/uwb";
 }
 void Chassis::ChassisInfoCallback(const std::shared_ptr<roborts_sdk::cmd_chassis_info> chassis_info){
 

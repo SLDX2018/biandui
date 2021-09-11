@@ -19,7 +19,7 @@ class BackBootAreaBehavior {
                                                        blackboard_(blackboard) {
 
 
-    boot_position_.header.frame_id = "map";
+    boot_position_.header.frame_id = "/sldx/map";
     boot_position_.pose.orientation.x = 0;
     boot_position_.pose.orientation.y = 0;
     boot_position_.pose.orientation.z = 0;
@@ -73,7 +73,7 @@ class BackBootAreaBehavior {
       return false;
     }
 
-    boot_position_.header.frame_id = "map";
+    boot_position_.header.frame_id = "/sldx/map";
 
     boot_position_.pose.position.x = decision_config.master_bot().start_position().x();
     boot_position_.pose.position.z = decision_config.master_bot().start_position().z();

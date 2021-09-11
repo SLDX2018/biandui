@@ -1,7 +1,53 @@
 <launch>
 
+    
   <group ns="sldx">
-    <include file="$(find roborts_bringup)/launch/roborts.launch" />
+
+    <!-- Run the map server -->
+    <arg name="map" value="map0906"/>
+    <node name="map_server" pkg="map_server" type="map_server" args="$(find roborts_bringup)/maps/$(arg map).yaml" respawn="false" >
+      <param name="frame_id" type="string" value="/sldx/map"/>
+    </node>
+
+    <!--Load parameters for localization node  -->
+    <rosparam command="load" file="$(find roborts_localization)/config/localization.yaml" />
+    <rosparam command="load" file="$(find roborts_localization)/amcl/config/amcl.yaml" />
+
+    <!-- Run the robot sdk interface -->
+    <include file="$(find roborts_bringup)/launch/base.launch" />
+
+    <!-- Publish static tf -->
+    <node pkg="tf2_ros" type="static_transform_publisher" name="base_link_base_laser_link_broadcaster"
+          args="0.20 0.20 0.0 3.1415 0.0 0.0 /sldx/base_link /sldx/base_laser_link" />
+    <!-- <node pkg="tf2_ros" type="static_transform_publisher" name="base_link_basemmmmmmmmmmapk_broadcaster"
+          args="0.0 0.0 0.0 0.0 0.0 0.0 map /sldx/map" /> -->
+
+    <!-- Run the lidar node -->
+    <node name="rplidarNode"          pkg="rplidar_ros"  type="rplidarNode" output="screen">
+      <param name="serial_port"         type="string" value="/dev/rplidar"/>  
+      <param name="serial_baudrate"     type="int"    value="256000"/>
+      <param name="frame_id"            type="string" value="/sldx/base_laser_link"/>
+      <param name="inverted"            type="bool"   value="false"/>
+      <param name="angle_compensate"    type="bool"   value="true"/>
+    </node>
+    
+    <!-- Run the laser_filters 过滤云台遮挡-->
+    <include file="$(find laser_filters)/examples/ab_laser_filter.launch"/>
+
+    <!-- Run the localization node -->
+    <node pkg="roborts_localization" type="localization_node" name="localization_node" respawn="false" />
+
+    <!-- Run the global planner node -->
+    <node pkg="roborts_planning" type="global_planner_node" name="global_planner_node" respawn="false" />
+
+    <!-- Run the local planner node -->
+    <node pkg="roborts_planning" type="local_planner_node" name="local_planner_node" respawn="false" />
+
+    <!-- Run the velocity converter node -->
+    <node pkg="roborts_planning" type="vel_converter" name="vel_converter_node" respawn="false" />
+    
+    <!-- Run the behavior node -->
+    <node pkg="roborts_decision" type="behavior_test_node" name="behavior_test_node" respawn="false" />
   </group>
 
 </launch>

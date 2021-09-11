@@ -25,9 +25,9 @@ namespace roborts_localization {
 // Get Parameters from ROS parameter server
 struct LocalizationConfig {
   void GetParam(ros::NodeHandle *nh) {
-      nh->param<std::string>("odom_frame", odom_frame_id, "odom");
-      nh->param<std::string>("base_frame", base_frame_id, "base_link");
-      nh->param<std::string>("global_frame", global_frame_id, "map");
+      nh->param<std::string>("odom_frame", odom_frame_id, "/sldx/odom");
+      nh->param<std::string>("base_frame", base_frame_id, "/sldx/base_link");
+      nh->param<std::string>("global_frame", global_frame_id, "/sldx/map");
       nh->param<std::string>("laser_topic_name", laser_topic_name, "scan");
       nh->param<std::string>("map_topic_name", map_topic_name, "map");
       nh->param<std::string>("init_pose_topic_name", init_pose_topic_name, "initialpose");
@@ -39,7 +39,7 @@ struct LocalizationConfig {
       nh->param<double>("initial_cov_yy", initial_cov_yy, 0.1);
       nh->param<double>("initial_cov_aa", initial_cov_aa, 0.1);
       nh->param<bool>("enable_uwb", enable_uwb, false);
-      nh->param<std::string>("uwb_frame_id", uwb_frame_id, "uwb");
+      nh->param<std::string>("uwb_frame_id", uwb_frame_id, "/sldx/uwb");
       nh->param<std::string>("uwb_topic_name", uwb_topic_name, "uwb");
       nh->param<bool>("use_sim_uwb", use_sim_uwb, false);
       nh->param<int>("uwb_correction_frequency", uwb_correction_frequency, 20);

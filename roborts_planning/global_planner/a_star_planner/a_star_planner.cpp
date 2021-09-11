@@ -202,7 +202,7 @@ namespace roborts_global_planner{
 
         geometry_msgs::PoseStamped iter_pos;
         iter_pos.pose.orientation.w = 1;
-        iter_pos.header.frame_id = "map";
+        iter_pos.header.frame_id = "/sldx/map";
         path.clear();
         costmap_ptr_->GetCostMap()->Index2Cells(iter_index, iter_x, iter_y);
         costmap_ptr_->GetCostMap()->Map2World(iter_x, iter_y, iter_pos.pose.position.x, iter_pos.pose.position.y);

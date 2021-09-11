@@ -105,7 +105,7 @@ class Blackboard {
       tf_pose.stamp_ = ros::Time(0);
       try
       {
-        tf_ptr_->transformPose("map", tf_pose, global_tf_pose);
+        tf_ptr_->transformPose("/sldx/map", tf_pose, global_tf_pose);
         tf::poseStampedTFToMsg(global_tf_pose, global_pose_msg);
 
         if(GetDistance(global_pose_msg, enemy_pose_)>0.2 || GetAngle(global_pose_msg, enemy_pose_) > 0.2){
@@ -192,12 +192,12 @@ class Blackboard {
     tf::Stamped<tf::Pose> robot_tf_pose;
     robot_tf_pose.setIdentity();
 
-    robot_tf_pose.frame_id_ = "base_link";
+    robot_tf_pose.frame_id_ = "/sldx/base_link";
     robot_tf_pose.stamp_ = ros::Time();
     try {
       geometry_msgs::PoseStamped robot_pose;
       tf::poseStampedTFToMsg(robot_tf_pose, robot_pose);
-      tf_ptr_->transformPose("map", robot_pose, robot_map_pose_);
+      tf_ptr_->transformPose("/sldx/map", robot_pose, robot_map_pose_);
     }
     catch (tf::LookupException &ex) {
       ROS_ERROR("Transform Error looking up robot pose: %s", ex.what());

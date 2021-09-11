@@ -85,8 +85,8 @@ void Gimbal::ROS_Init(){
   ros_ctrl_fric_wheel_srv_ = ros_nh_.advertiseService("cmd_fric_wheel", &Gimbal::CtrlFricWheelService, this);
   ros_ctrl_shoot_srv_ = ros_nh_.advertiseService("cmd_shoot", &Gimbal::CtrlShootService, this);
   //ros_message_init
-  gimbal_tf_.header.frame_id = "base_link";
-  gimbal_tf_.child_frame_id = "gimbal";
+  gimbal_tf_.header.frame_id = "/sldx/base_link";
+  gimbal_tf_.child_frame_id = "/sldx/gimbal";
 
 }
 
