@@ -19,7 +19,7 @@ class SearchBehavior {
                                                        blackboard_(blackboard) {
 
 
-    last_position_.header.frame_id = "map";
+    last_position_.header.frame_id = "/sldx/map";
     last_position_.pose.orientation.x = 0;
     last_position_.pose.orientation.y = 0;
     last_position_.pose.orientation.z = 0;
@@ -85,7 +85,7 @@ class SearchBehavior {
         auto orientation = tf::createQuaternionMsgFromYaw(yaw);
 
         geometry_msgs::PoseStamped goal;
-        goal.header.frame_id = "map";
+        goal.header.frame_id = "/sldx/map";
         goal.header.stamp = ros::Time::now();
         goal.pose.position = last_position_.pose.position;
         goal.pose.orientation = orientation;
@@ -120,7 +120,7 @@ class SearchBehavior {
     search_region_.resize((unsigned int)(decision_config.search_region_1().size()));
     for (int i = 0; i != decision_config.search_region_1().size(); i++) {
       geometry_msgs::PoseStamped search_point;
-      search_point.header.frame_id = "map";
+      search_point.header.frame_id = "/sldx/map";
       search_point.pose.position.x = decision_config.search_region_1(i).x();
       search_point.pose.position.y = decision_config.search_region_1(i).y();
       search_point.pose.position.z = decision_config.search_region_1(i).z();
@@ -134,7 +134,7 @@ class SearchBehavior {
 
     for (int i = 0; i != decision_config.search_region_2().size(); i++) {
       geometry_msgs::PoseStamped search_point;
-      search_point.header.frame_id = "map";
+      search_point.header.frame_id = "/sldx/map";
       search_point.pose.position.x = decision_config.search_region_2(i).x();
       search_point.pose.position.y = decision_config.search_region_2(i).y();
       search_point.pose.position.z = decision_config.search_region_2(i).z();
@@ -148,7 +148,7 @@ class SearchBehavior {
 
     for (int i = 0; i != decision_config.search_region_3().size(); i++) {
       geometry_msgs::PoseStamped search_point;
-      search_point.header.frame_id = "map";
+      search_point.header.frame_id = "/sldx/map";
       search_point.pose.position.x = decision_config.search_region_3(i).x();
       search_point.pose.position.y = decision_config.search_region_3(i).y();
       search_point.pose.position.z = decision_config.search_region_3(i).z();
@@ -162,7 +162,7 @@ class SearchBehavior {
 
     for (int i = 0; i != decision_config.search_region_4().size(); i++) {
       geometry_msgs::PoseStamped search_point;
-      search_point.header.frame_id = "map";
+      search_point.header.frame_id = "/sldx/map";
       search_point.pose.position.x = decision_config.search_region_4(i).x();
       search_point.pose.position.y = decision_config.search_region_4(i).y();
       search_point.pose.position.z = decision_config.search_region_4(i).z();

@@ -1,6 +1,6 @@
 opt_frame {
-    odom_frame: "odom"
-    map_frame: "map"
+    odom_frame: "/sldx/odom"
+    map_frame: "/sldx/map"
 }
 
 trajectory_opt {

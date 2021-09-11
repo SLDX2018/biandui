@@ -144,7 +144,7 @@ double AmclMap::GetCellOccDistByCoord(unsigned i, unsigned j) {
 
 const nav_msgs::OccupancyGrid &AmclMap::ConvertDistanMaptoMapMsg() {
 	if (!distance_map_init_) {
-		distance_map_msg_.header.frame_id = "map";
+		distance_map_msg_.header.frame_id = "/sldx/map";
 		distance_map_msg_.info.width = this->size_x_;
 		distance_map_msg_.info.height = this->size_y_;
 		distance_map_msg_.info.resolution = this->scale_;

@@ -19,7 +19,7 @@ class ChaseBehavior {
                                                        blackboard_(blackboard) {
 
 
-    chase_goal_.header.frame_id = "map";
+    chase_goal_.header.frame_id = "/sldx/map";
     chase_goal_.pose.orientation.x = 0;
     chase_goal_.pose.orientation.y = 0;
     chase_goal_.pose.orientation.z = 0;
@@ -63,7 +63,7 @@ class ChaseBehavior {
         geometry_msgs::PoseStamped reduce_goal;
         reduce_goal.pose.orientation = robot_map_pose.pose.orientation;
 
-        reduce_goal.header.frame_id = "map";
+        reduce_goal.header.frame_id = "/sldx/map";
         reduce_goal.header.stamp = ros::Time::now();
         reduce_goal.pose.position.x = chase_buffer_[(chase_count_ + 2 - 1) % 2].pose.position.x - 1.2 * cos(yaw);
         reduce_goal.pose.position.y = chase_buffer_[(chase_count_ + 2 - 1) % 2].pose.position.y - 1.2 * sin(yaw);

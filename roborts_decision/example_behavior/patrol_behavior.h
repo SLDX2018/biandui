@@ -64,7 +64,7 @@ class PatrolBehavior {
     point_size_ = (unsigned int)(decision_config.point().size());
     patrol_goals_.resize(point_size_);
     for (int i = 0; i != point_size_; i++) {
-      patrol_goals_[i].header.frame_id = "map";
+      patrol_goals_[i].header.frame_id = "/sldx/map";
       patrol_goals_[i].pose.position.x = decision_config.point(i).x();
       patrol_goals_[i].pose.position.y = decision_config.point(i).y();
       patrol_goals_[i].pose.position.z = decision_config.point(i).z();

@@ -126,7 +126,7 @@ class EscapeBehavior {
         auto quaternion = tf::createQuaternionMsgFromRollPitchYaw(0,0,goal_yaw);
 
         geometry_msgs::PoseStamped escape_goal;
-        escape_goal.header.frame_id = "map";
+        escape_goal.header.frame_id = "/sldx/map";
         escape_goal.header.stamp = ros::Time::now();
         escape_goal.pose.position.x = goal_x;
         escape_goal.pose.position.y = goal_y;
